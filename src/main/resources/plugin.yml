@@ -1,3 +1,84 @@
 name: SOYSLinkTeam
 version: '${project.version}'
 main: soys.soyslinkteam.SOYSLinkTeam
+author: SOYS
+description: 高度自定义的队伍插件，替代 Minecraft 原生队伍功能
+website: https://github.com/soys
+depend:
+  - PlaceholderAPI
+
+commands:
+  steam:
+    description: SOYSLinkTeam 队伍指令主入口
+    usage: /steam help
+    aliases:
+      - t
+      - slt
+      - 队伍
+  teamadmin:
+    description: SOYSLinkTeam 管理指令入口
+    usage: /teamadmin help
+    aliases:
+      - slta
+      - tadmin
+      - 队伍管理
+
+permissions:
+  # ============================================================
+  #  玩家基础权限
+  # ============================================================
+  soyslinkteam.use:
+    description: 允许使用 /team 基础指令（help / info / list）
+    default: true
+  soyslinkteam.create:
+    description: 允许创建队伍
+    default: true
+  soyslinkteam.join:
+    description: 允许加入队伍
+    default: true
+  soyslinkteam.player:
+    description: 玩家权限合集
+    default: true
+    children:
+      soyslinkteam.use: true
+      soyslinkteam.create: true
+      soyslinkteam.join: true
+
+  # ============================================================
+  #  队伍人数上限
+  #  soyslinkteam.size.<n> 为动态节点，取玩家拥有的最大 n 值
+  #  例：soyslinkteam.size.10 表示该玩家的队伍最多 10 人
+  #  未匹配到任何节点时使用 config.yml 的 team.default-max-size
+  # ============================================================
+  soyslinkteam.size.*:
+    description: 队伍人数上限动态节点（soyslinkteam.size.<数字>）
+    default: false
+
+  # ============================================================
+  #  管理员权限
+  # ============================================================
+  soyslinkteam.admin.reload:
+    description: 允许重载配置文件
+    default: op
+  soyslinkteam.admin.migrate:
+    description: 允许执行存储迁移与同步
+    default: op
+  soyslinkteam.admin.manage:
+    description: 允许强制解散队伍、强制踢出与修改任意队伍
+    default: op
+  soyslinkteam.admin.inspect:
+    description: 允许查看任意队伍详情与存储状态
+    default: op
+  soyslinkteam.admin.bypass:
+    description: 无视队伍人数上限、冷却与入队限制
+    default: op
+  soyslinkteam.admin:
+    description: 管理员权限合集
+    default: op
+    children:
+      soyslinkteam.player: true
+      soyslinkteam.admin.reload: true
+      soyslinkteam.admin.migrate: true
+      soyslinkteam.admin.manage: true
+      soyslinkteam.admin.inspect: true
+      soyslinkteam.admin.bypass: true

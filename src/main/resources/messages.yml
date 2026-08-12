@@ -1,0 +1,297 @@
+# ============================================================================
+#  SOYSLinkTeam - 消息文件 (zh_CN)
+# ----------------------------------------------------------------------------
+#  颜色代码使用 & 符号。
+#  值为空字符串 '' 时该条消息不会发送，可用于精简提示。
+#  支持列表形式（多行消息），例如 help.player。
+# ============================================================================
+
+# 所有消息的统一前缀，使用 {prefix} 占位符引用
+prefix: '&8[&b队伍&8] &r'
+
+# ============================================================================
+#  通用
+# ============================================================================
+general:
+  no-permission: '{prefix}&c你没有权限执行此操作。'
+  player-only: '{prefix}&c该指令只能由玩家执行。'
+  unknown-command: '{prefix}&c未知的子指令 &f{input}&c，输入 &f/{label} help &c查看帮助。'
+  player-not-found: '{prefix}&c找不到玩家 &f{player}&c。'
+  player-offline: '{prefix}&c玩家 &f{player} &c当前不在线。'
+  invalid-number: '{prefix}&c&f{input} &c不是一个有效的数字。'
+  reload-success: '{prefix}&a配置文件已重载，耗时 &f{ms}ms&a。'
+  reload-failed: '{prefix}&c配置重载失败，详情请查看控制台。'
+  cooldown: '{prefix}&c操作过于频繁，请在 &f{seconds} &c秒后重试。'
+  storage-error: '{prefix}&c存储操作失败，请联系管理员查看控制台。'
+  confirm-required: '{prefix}&e请在 &f{seconds} &e秒内再次输入该指令以确认操作。'
+  confirm-expired: '{prefix}&c确认已超时，操作已取消。'
+  operation-cancelled: '{prefix}&7操作已取消。'
+
+# ============================================================================
+#  事件（可被其它插件取消的队伍操作反馈）
+# ============================================================================
+event:
+  cancelled: '{prefix}&c操作已被取消。{reason}'
+
+# ============================================================================
+#  队伍 - 创建 / 解散
+# ============================================================================
+team:
+  already-in-team: '{prefix}&c你已经在队伍 &f{team} &c中了，请先退出。'
+  not-in-team: '{prefix}&c你还没有加入任何队伍。'
+  target-not-in-team: '{prefix}&c玩家 &f{player} &c不在任何队伍中。'
+  target-not-in-your-team: '{prefix}&c玩家 &f{player} &c不在你的队伍中。'
+  team-not-found: '{prefix}&c找不到队伍 &f{team}&c。'
+  team-full: '{prefix}&c队伍 &f{team} &c人数已满 &7({size}/{max})&c。'
+
+  create:
+    usage: '{prefix}&c用法: &f/{label} create <队伍名称>'
+    success: '{prefix}&a队伍 &f{team} &a创建成功！输入 &f/{label} invite <玩家> &a邀请队友。'
+    name-too-short: '{prefix}&c队伍名称至少需要 &f{min} &c个字符。'
+    name-too-long: '{prefix}&c队伍名称最多 &f{max} &c个字符。'
+    name-invalid: '{prefix}&c队伍名称包含非法字符，仅允许中文、字母、数字与下划线。'
+    name-blacklisted: '{prefix}&c队伍名称包含禁用词。'
+    name-duplicate: '{prefix}&c已存在名为 &f{team} &c的队伍，请换一个名称。'
+
+  disband:
+    confirm: '{prefix}&e确定要解散队伍 &f{team} &e吗？此操作不可撤销。'
+    success: '{prefix}&a队伍 &f{team} &a已解散。'
+    broadcast: '{prefix}&c队伍 &f{team} &c已被队长 &f{player} &c解散。'
+    admin-broadcast: '{prefix}&c队伍 &f{team} &c已被管理员强制解散。'
+    # 空队伍自动解散（最后一名成员离开触发）
+    empty: '{prefix}&7队伍 &f{team} &7因最后一名成员离开而自动解散。'
+    # 队长离线自动转让提示
+    autotransfer:
+      notice: '{prefix}&7队长 &f{old} &7已离线过久，队长自动移交给 &f{player}&7。'
+
+# ============================================================================
+#  队伍 - 成员流转
+# ============================================================================
+member:
+  join-broadcast: '{prefix}&a{player} &7加入了队伍。&8({size}/{max})'
+  leave-broadcast: '{prefix}&e{player} &7离开了队伍。&8({size}/{max})'
+  leave-success: '{prefix}&a你已退出队伍 &f{team}&a。'
+  leave-leader-denied: '{prefix}&c你是队长，请先使用 &f/{label} transfer <玩家> &c转让队长，或使用 &f/{label} disband &c解散队伍。'
+  leave-leader-transferred: '{prefix}&e你退出了队伍，队长已自动转让给 &f{player}&e。'
+  leave-leader-disbanded: '{prefix}&e你退出了队伍，队伍因无人而解散。'
+  rejoin-cooldown: '{prefix}&c你刚刚退出过队伍，请在 &f{seconds} &c秒后再加入。'
+
+  kick:
+    usage: '{prefix}&c用法: &f/{label} kick <玩家>'
+    success: '{prefix}&a已将 &f{player} &a踢出队伍。'
+    kicked:
+      - '{prefix}&c你已被 &f{operator} &c踢出队伍 &f{team}&c。'
+      - '&7如需重新加入，可联系队长或成员再次邀请你。'
+    broadcast: '{prefix}&c{player} &7被 &f{operator} &7踢出了队伍。'
+    cannot-kick-self: '{prefix}&c你不能踢出自己，请使用 &f/{label} leave&c。'
+    cannot-kick-leader: '{prefix}&c你不能踢出队长。'
+    cannot-kick-same-role: '{prefix}&c你不能踢出与你同级或更高级的成员。'
+
+  transfer:
+    usage: '{prefix}&c用法: &f/{label} transfer <玩家>'
+    success: '{prefix}&a你已将队长转让给 &f{player}&a。'
+    received: '{prefix}&6你已成为队伍 &f{team} &6的新队长！'
+    broadcast: '{prefix}&6{player} &7成为了新任队长。'
+    cannot-transfer-self: '{prefix}&c你已经是队长了。'
+
+  promote:
+    usage: '{prefix}&c用法: &f/{label} promote <玩家>'
+    success: '{prefix}&a已将 &f{player} &a提升为副队长。'
+    received: '{prefix}&e你已被提升为队伍 &f{team} &e的副队长。'
+    already-admin: '{prefix}&c&f{player} &c已经是副队长了。'
+    limit-reached: '{prefix}&c副队长数量已达上限 &f{max} &c人。'
+    disabled: '{prefix}&c本服未开启副队长功能。'
+
+  demote:
+    usage: '{prefix}&c用法: &f/{label} demote <玩家>'
+    success: '{prefix}&a已将 &f{player} &a降为普通队员。'
+    received: '{prefix}&e你已被降为队伍 &f{team} &e的普通队员。'
+    not-admin: '{prefix}&c&f{player} &c不是副队长。'
+
+# ============================================================================
+#  入队方式
+# ============================================================================
+join:
+  usage: '{prefix}&c用法: &f/{label} join <队伍名称> [口令]'
+  no-method-available: '{prefix}&c你无法加入队伍 &f{team}&c：该队伍未开放任何你可用的加入方式。'
+  method-disabled: '{prefix}&c本服未开启「{method}」入队方式。'
+  success: '{prefix}&a你已加入队伍 &f{team}&a！'
+
+  # ---------- 邀请 ----------
+  invite:
+    usage: '{prefix}&c用法: &f/{label} invite <玩家>'
+    sent: '{prefix}&a已向 &f{player} &a发送队伍邀请，&f{seconds} &a秒内有效。'
+    received: '{prefix}&e{player} &6邀请你加入队伍 &f{team}&6！'
+    received-hint: '{prefix}&7输入 &a/{label} accept {team} &7接受，或 &c/{label} deny {team} &7拒绝。'
+    already-invited: '{prefix}&c你已经向 &f{player} &c发送过邀请了，请在 &f{seconds} &c秒后重试。'
+    already-in-team: '{prefix}&c玩家 &f{player} &c已经在其它队伍中了。'
+    invite-self: '{prefix}&c你不能邀请自己。'
+    offline-denied: '{prefix}&c本服不允许邀请离线玩家。'
+    pending-limit: '{prefix}&c玩家 &f{player} &c的待处理邀请已达上限。'
+    expired:
+      - '{prefix}&7来自队伍 &f{team} &7的邀请已过期。'
+      - '&7如需加入，可向队长重新申请邀请。'
+    cancelled: '{prefix}&7来自队伍 &f{team} &7的邀请已失效。'
+
+    accept:
+      usage: '{prefix}&c用法: &f/{label} accept <队伍名称>'
+      no-pending: '{prefix}&c你当前没有待处理的队伍邀请。'
+      not-found: '{prefix}&c你没有收到来自队伍 &f{team} &c的邀请。'
+      broadcast: '{prefix}&a{player} &7接受了邀请并加入了队伍。'
+      multiple-hint: '{prefix}&e你有多个待处理邀请，请指定队伍名称: &f{teams}'
+
+    deny:
+      usage: '{prefix}&c用法: &f/{label} deny <队伍名称>'
+      success: '{prefix}&7你拒绝了来自队伍 &f{team} &7的邀请。'
+      notify-inviter: '{prefix}&c{player} &7拒绝了你的队伍邀请。'
+
+  # ---------- 公开加入 ----------
+  public:
+    not-public: '{prefix}&c队伍 &f{team} &c不是公开队伍，无法直接加入。'
+    leader-offline: '{prefix}&c队伍 &f{team} &c的队长不在线，暂时无法加入。'
+
+  # ---------- 口令加入 ----------
+  password:
+    required: '{prefix}&c队伍 &f{team} &c需要口令，用法: &f/{label} join {team} <口令>'
+    incorrect: '{prefix}&c口令错误。&7(剩余尝试次数: {remaining})'
+    locked: '{prefix}&c尝试次数过多，请在 &f{seconds} &c秒后重试。'
+
+# ============================================================================
+#  队伍设置 (/team set ...)
+# ============================================================================
+settings:
+  usage:
+    - '{prefix}&e队伍设置指令:'
+    - '&8 • &f/{label} set name <名称> &7- 修改队伍名称'
+    - '&8 • &f/{label} set tag <简称> &7- 修改队伍简称'
+    - '&8 • &f/{label} set notice <公告> &7- 修改队伍公告'
+    - '&8 • &f/{label} set public <on|off> &7- 切换公开状态'
+    - '&8 • &f/{label} set password <口令|off> &7- 设置或清除口令'
+
+  name:
+    success: '{prefix}&a队伍名称已修改为 &f{name}&a。'
+    broadcast: '{prefix}&7队伍名称已被 &f{player} &7修改为 &f{name}&7。'
+
+  tag:
+    disabled: '{prefix}&c本服未开启队伍简称功能。'
+    success: '{prefix}&a队伍简称已设置为 &f{tag}&a。'
+    too-short: '{prefix}&c简称至少需要 &f{min} &c个字符。'
+    too-long: '{prefix}&c简称最多 &f{max} &c个字符。'
+    invalid: '{prefix}&c简称包含非法字符。'
+
+  notice:
+    disabled: '{prefix}&c本服未开启队伍公告功能。'
+    success: '{prefix}&a队伍公告已更新。'
+    cleared: '{prefix}&a队伍公告已清除。'
+    too-long: '{prefix}&c公告最多 &f{max} &c个字符。'
+    broadcast: '{prefix}&e队伍公告: &f{notice}'
+    on-join: '{prefix}&e队伍公告: &f{notice}'
+
+  public:
+    enabled: '{prefix}&a队伍已设为公开，其他玩家可通过 &f/{label} join {team} &a直接加入。'
+    disabled: '{prefix}&a队伍已设为私密。'
+    method-disabled: '{prefix}&c本服未开启公开队伍功能。'
+
+  password:
+    set: '{prefix}&a队伍口令已设置为 &f{password}&a。'
+    cleared: '{prefix}&a队伍口令已清除。'
+    too-short: '{prefix}&c口令至少需要 &f{min} &c个字符。'
+    too-long: '{prefix}&c口令最多 &f{max} &c个字符。'
+    method-disabled: '{prefix}&c本服未开启口令入队功能。'
+
+# ============================================================================
+#  队伍信息展示
+# ============================================================================
+info:
+  header: '&8&m---------&r &b队伍信息 &8&m---------'
+  footer: '&8&m------------------------------'
+  name: '&7名称: &f{name}'
+  tag: '&7简称: &f{tag}'
+  leader: '&7队长: &f{leader}'
+  size: '&7人数: &f{size}&7/&f{max} &8(在线 {online})'
+  created: '&7创建: &f{created}'
+  public: '&7公开: {public}'
+  locked: '&7口令: {locked}'
+  notice: '&7公告: &f{notice}'
+  members-header: '&7成员:'
+  member-entry: '&8 • {role} &f{player} {status}'
+  status-online: '&a[在线]'
+  status-offline: '&8[离线]'
+
+list:
+  header: '&8&m-------&r &b队伍列表 &7(第 {page}/{max_page} 页) &8&m-------'
+  entry: '&8 • &f{name} &7- 队长 &f{leader} &7- &f{size}&7/&f{max} &8(在线 {online}) {public}'
+  footer: '&7输入 &f/{label} list <页码> &7查看更多'
+  empty: '{prefix}&7服务器上还没有任何队伍。'
+  invalid-page: '{prefix}&c页码超出范围，共 &f{max_page} &c页。'
+
+# ============================================================================
+#  管理指令
+# ============================================================================
+admin:
+  usage:
+    - '&8&m---------&r &c队伍管理 &8&m---------'
+    - '&8 • &f/{label} reload &7- 重载配置'
+    - '&8 • &f/{label} info <队伍|玩家> &7- 查看任意队伍详情'
+    - '&8 • &f/{label} disband <队伍> &7- 强制解散队伍'
+    - '&8 • &f/{label} kick <玩家> &7- 强制将玩家踢出队伍'
+    - '&8 • &f/{label} transfer <队伍> <玩家> &7- 强制转让队长'
+    - '&8 • &f/{label} storage &7- 查看存储后端状态'
+    - '&8 • &f/{label} migrate <来源> <目标> [overwrite] &7- 存储互转'
+    - '&8 • &f/{label} sync &7- 主存储覆盖同步到辅助存储'
+    - '&8 • &f/{label} save &7- 立即保存所有内存中的队伍'
+    - '&8&m------------------------------'
+
+  storage:
+    header: '&8&m--------&r &b存储状态 &8&m--------'
+    primary: '&7主存储: &a{type} &8({detail})'
+    secondary: '&7辅助存储: &e{type}'
+    none-secondary: '&7辅助存储: &8无'
+    loaded-teams: '&7内存中的队伍: &f{loaded} &7/ 总计 &f{total}'
+    mirror: '&7镜像写入: {enabled} &8(异步: {async})'
+
+  migrate:
+    usage: '{prefix}&c用法: &f/{label} migrate <yaml|sqlite|mysql> <yaml|sqlite|mysql> [overwrite]'
+    same-type: '{prefix}&c来源与目标不能是同一个存储后端。'
+    not-enabled: '{prefix}&c存储后端 &f{type} &c未启用，请先在 config.yml 中开启。'
+    unknown-type: '{prefix}&c未知的存储类型 &f{type}&c，可用: yaml / sqlite / mysql'
+    started: '{prefix}&e开始将 &f{from} &e的数据迁移到 &f{to}&e，请稍候...'
+    warn-overwrite: '{prefix}&c警告: 该操作将清空 &f{to} &c的现有数据！请追加 &f overwrite &c参数确认。'
+    success: '{prefix}&a迁移完成: &f{count} &a支队伍已从 &f{from} &a写入 &f{to}&a，耗时 &f{ms}ms&a。'
+    failed: '{prefix}&c迁移失败: &f{error}'
+
+  sync:
+    started: '{prefix}&e开始将主存储数据同步到所有辅助存储...'
+    success: '{prefix}&a同步完成: &f{count} &a支队伍已写入 &f{targets} &a个辅助存储，耗时 &f{ms}ms&a。'
+    no-secondary: '{prefix}&c当前没有启用任何辅助存储。'
+    failed: '{prefix}&c同步失败: &f{error}'
+
+  save:
+    success: '{prefix}&a已保存 &f{count} &a支内存中的队伍。'
+
+  force:
+    disband-success: '{prefix}&a已强制解散队伍 &f{team}&a。'
+    kick-success: '{prefix}&a已将 &f{player} &a从队伍 &f{team} &a中移除。'
+    transfer-success: '{prefix}&a已将队伍 &f{team} &a的队长转让给 &f{player}&a。'
+
+# ============================================================================
+#  帮助
+# ============================================================================
+help:
+  player:
+    - '&8&m---------&r &b队伍指令 &8&m---------'
+    - '&8 • &f/{label} create <名称> &7- 创建队伍'
+    - '&8 • &f/{label} disband &7- 解散队伍'
+    - '&8 • &f/{label} invite <玩家> &7- 邀请玩家'
+    - '&8 • &f/{label} accept [队伍] &7- 接受邀请'
+    - '&8 • &f/{label} deny [队伍] &7- 拒绝邀请'
+    - '&8 • &f/{label} join <队伍> [口令] &7- 加入队伍'
+    - '&8 • &f/{label} leave &7- 退出队伍'
+    - '&8 • &f/{label} kick <玩家> &7- 踢出成员'
+    - '&8 • &f/{label} transfer <玩家> &7- 转让队长'
+    - '&8 • &f/{label} promote <玩家> &7- 提升为副队长'
+    - '&8 • &f/{label} demote <玩家> &7- 降为普通队员'
+    - '&8 • &f/{label} info [队伍] &7- 查看队伍信息'
+    - '&8 • &f/{label} list [页码] &7- 查看队伍列表'
+    - '&8 • &f/{label} set &7- 队伍设置'
+    - '&8&m------------------------------'
