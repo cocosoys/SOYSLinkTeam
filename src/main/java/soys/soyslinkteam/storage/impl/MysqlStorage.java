@@ -112,6 +112,7 @@ public class MysqlStorage extends SqlStorage {
                         + "role VARCHAR(16) NOT NULL,"
                         + "joined_at BIGINT NOT NULL,"
                         + "last_seen BIGINT NOT NULL,"
+                        + "chat_channel TINYINT(1) NOT NULL DEFAULT 0,"
                         + "PRIMARY KEY (team_id, player_uuid),"
                         + "INDEX idx_player_uuid (player_uuid)"
                         + ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"

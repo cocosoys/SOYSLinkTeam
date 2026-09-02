@@ -274,6 +274,7 @@ public class YamlStorage implements DataStorage {
             config.set(path + ".role", member.getRole().name());
             config.set(path + ".joined-at", member.getJoinedAt());
             config.set(path + ".last-seen", member.getLastSeen());
+            config.set(path + ".chat-channel", member.isChatChannel());
         }
     }
 
@@ -303,7 +304,8 @@ public class YamlStorage implements DataStorage {
                         members.getString(key + ".name", "未知"),
                         TeamRole.parse(members.getString(key + ".role")),
                         members.getLong(key + ".joined-at", createdAt),
-                        members.getLong(key + ".last-seen", createdAt)));
+                        members.getLong(key + ".last-seen", createdAt),
+                        members.getBoolean(key + ".chat-channel", false)));
             }
         }
         team.clearDirty();

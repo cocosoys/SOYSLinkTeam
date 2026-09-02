@@ -3,6 +3,7 @@ package soys.soyslinkteam.command;
 import org.bukkit.command.CommandSender;
 import soys.soyslinkteam.SOYSLinkTeam;
 import soys.soyslinkteam.command.sub.AcceptSub;
+import soys.soyslinkteam.command.sub.ChatSub;
 import soys.soyslinkteam.command.sub.CreateSub;
 import soys.soyslinkteam.command.sub.DenySub;
 import soys.soyslinkteam.command.sub.DemoteSub;
@@ -33,6 +34,7 @@ public class TeamCommand extends CommandDispatcher {
         register(new DenySub(plugin));
         register(new JoinSub(plugin));
         register(new LeaveSub(plugin));
+        register(new ChatSub(plugin));
         register(new KickSub(plugin));
         register(new TransferSub(plugin));
         register(new PromoteSub(plugin));

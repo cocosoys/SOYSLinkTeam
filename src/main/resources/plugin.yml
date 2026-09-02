@@ -6,6 +6,16 @@ description: 高度自定义的队伍插件，替代 Minecraft 原生队伍功�
 website: https://github.com/soys
 depend:
   - PlaceholderAPI
+# EssentialsX / CMI 作为软依赖：仅用于共存检测与可选直连，缺失时插件仍可独立运行。
+# ProtocolLib 为头顶名称（数据包方案）的运行依赖，缺失时头顶名称功能自动停用。
+# Vault 为经济消耗入队（EconomyJoinMethod）的运行依赖，缺失时经济入队自动停用。
+# LuckPerms 为上下文注入与 VIP 元数据读取的运行依赖，缺失时这两项功能自动停用。
+softdepend:
+  - Essentials
+  - CMI
+  - ProtocolLib
+  - Vault
+  - LuckPerms
 
 commands:
   steam:
@@ -36,6 +46,12 @@ permissions:
   soyslinkteam.join:
     description: 允许加入队伍
     default: true
+  soyslinkteam.chat:
+    description: 允许使用队伍频道聊天（/steam chat）
+    default: true
+  soyslinkteam.chat.spy:
+    description: 可旁听任意队伍的频道聊天
+    default: op
   soyslinkteam.player:
     description: 玩家权限合集
     default: true

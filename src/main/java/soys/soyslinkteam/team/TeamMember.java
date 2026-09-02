@@ -16,18 +16,21 @@ public class TeamMember {
     private volatile TeamRole role;
     private final long joinedAt;
     private volatile long lastSeen;
+    /** 是否开启队伍频道聊天（持久化） */
+    private volatile boolean chatChannel = false;
 
-    public TeamMember(UUID uuid, String name, TeamRole role, long joinedAt, long lastSeen) {
+    public TeamMember(UUID uuid, String name, TeamRole role, long joinedAt, long lastSeen, boolean chatChannel) {
         this.uuid = uuid;
         this.name = name;
         this.role = role == null ? TeamRole.MEMBER : role;
         this.joinedAt = joinedAt;
         this.lastSeen = lastSeen;
+        this.chatChannel = chatChannel;
     }
 
     public static TeamMember of(Player player, TeamRole role) {
         long now = System.currentTimeMillis();
-        return new TeamMember(player.getUniqueId(), player.getName(), role, now, now);
+        return new TeamMember(player.getUniqueId(), player.getName(), role, now, now, false);
     }
 
     public UUID getUuid() {
@@ -64,6 +67,14 @@ public class TeamMember {
 
     public void touchLastSeen() {
         this.lastSeen = System.currentTimeMillis();
+    }
+
+    public boolean isChatChannel() {
+        return chatChannel;
+    }
+
+    public void setChatChannel(boolean chatChannel) {
+        this.chatChannel = chatChannel;
     }
 
     /**

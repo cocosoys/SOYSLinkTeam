@@ -438,6 +438,8 @@ public class TeamManager {
         TeamMember removed = team.removeMember(playerId);
         if (removed != null) {
             playerIndex.remove(playerId);
+            // 离开队伍即关闭其队伍频道开关，避免残留定向频道
+            removed.setChatChannel(false);
             if (team.getSize() == 0 && plugin.getConfigManager().isDisbandWhenEmpty()) {
                 // 最后一名成员离开且开启了自动解散：解散空队伍
                 autoDisbandEmpty(team, removed);

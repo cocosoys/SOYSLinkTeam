@@ -83,6 +83,7 @@ public class SqliteStorage extends SqlStorage {
                         + "role TEXT NOT NULL,"
                         + "joined_at INTEGER NOT NULL,"
                         + "last_seen INTEGER NOT NULL,"
+                        + "chat_channel INTEGER NOT NULL DEFAULT 0,"
                         + "PRIMARY KEY (team_id, player_uuid)"
                         + ")",
                 "CREATE INDEX IF NOT EXISTS idx_" + tablePrefix + "members_uuid"

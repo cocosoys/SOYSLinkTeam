@@ -364,8 +364,8 @@ public abstract class SqlStorage implements DataStorage {
         }
 
         String memberSql = "REPLACE INTO " + membersTable()
-                + " (team_id, player_uuid, player_name, role, joined_at, last_seen)"
-                + " VALUES (?, ?, ?, ?, ?, ?)";
+                + " (team_id, player_uuid, player_name, role, joined_at, last_seen, chat_channel)"
+                + " VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement statement = conn.prepareStatement(memberSql)) {
             for (TeamMember member : team.getMembers()) {
                 statement.setString(1, team.getId().toString());
@@ -374,6 +374,7 @@ public abstract class SqlStorage implements DataStorage {
                 statement.setString(4, member.getRole().name());
                 statement.setLong(5, member.getJoinedAt());
                 statement.setLong(6, member.getLastSeen());
+                statement.setBoolean(7, member.isChatChannel());
                 statement.addBatch();
             }
             statement.executeBatch();
@@ -422,7 +423,8 @@ public abstract class SqlStorage implements DataStorage {
                 rs.getString("player_name"),
                 TeamRole.parse(rs.getString("role")),
                 rs.getLong("joined_at"),
-                rs.getLong("last_seen"));
+                rs.getLong("last_seen"),
+                rs.getBoolean("chat_channel"));
     }
 
     protected UUID parseUuid(String input) {

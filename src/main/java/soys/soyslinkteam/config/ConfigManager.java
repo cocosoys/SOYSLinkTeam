@@ -205,6 +205,35 @@ public class ConfigManager {
         return rulesConfig.getString("team.tag.fallback", "{name}");
     }
 
+    // ================================================================
+    //  队伍规则 - 头顶名称 / 计分板（来源: teams.yml，需 ProtocolLib）
+    // ================================================================
+
+    /** 头顶名称（数据包方案）是否启用 */
+    public boolean isNametagEnabled() {
+        return rulesConfig.getBoolean("team.tag.nametag.enabled", true);
+    }
+
+    /** 是否按角色着色玩家名（队长金 / 副队长蓝 / 队员默认） */
+    public boolean isNametagUseRoleColor() {
+        return rulesConfig.getBoolean("team.tag.nametag.use-role-color", true);
+    }
+
+    /** 简称与玩家名之间的分隔符 */
+    public String getNametagSeparator() {
+        return rulesConfig.getString("team.tag.nametag.separator", " ");
+    }
+
+    /** 碰撞规则: ALWAYS / NEVER / OTHER_TEAMS / OTHER_PLAYERS */
+    public String getNametagCollisionRule() {
+        return rulesConfig.getString("team.tag.nametag.collision-rule", "NEVER").toUpperCase();
+    }
+
+    /** 名称可见性: ALWAYS / NEVER / HIDE_FOR_OTHER_TEAMS / HIDE_FOR_OWN_TEAM 等 */
+    public String getNametagVisibility() {
+        return rulesConfig.getString("team.tag.nametag.visibility", "ALWAYS").toUpperCase();
+    }
+
     public boolean isNoticeEnabled() {
         return rulesConfig.getBoolean("team.notice.enabled", true);
     }
@@ -251,6 +280,17 @@ public class ConfigManager {
 
     public boolean isLeaderCanKickAdmin() {
         return rulesConfig.getBoolean("team.behavior.leader-can-kick-admin", true);
+    }
+
+    /** 队伍频道聊天是否开启（/steam chat） */
+    public boolean isTeamChatEnabled() {
+        return rulesConfig.getBoolean("team.behavior.team-chat.enabled", true);
+    }
+
+    /** 队伍频道消息格式，可用占位 {player} {message} */
+    public String getTeamChatFormat() {
+        return rulesConfig.getString("team.behavior.team-chat.format",
+                "&8[&e队伍&8] &f{player}&8: &7{message}");
     }
 
     // ================================================================

@@ -9,6 +9,9 @@ import soys.soyslinkteam.config.ConfigManager;
 import soys.soyslinkteam.config.MessageManager;
 import soys.soyslinkteam.join.InviteManager;
 import soys.soyslinkteam.join.JoinMethodRegistry;
+import soys.soyslinkteam.chat.ChatListener;
+import soys.soyslinkteam.chat.TeamChannelManager;
+import soys.soyslinkteam.nametag.NametagManager;
 import soys.soyslinkteam.permission.PermissionManager;
 import soys.soyslinkteam.storage.StorageManager;
 import soys.soyslinkteam.team.TeamManager;
@@ -35,6 +38,8 @@ public final class SOYSLinkTeam extends JavaPlugin {
     private JoinMethodRegistry joinMethodRegistry;
     private InviteManager inviteManager;
     private PlaceholderHook placeholderHook;
+    private TeamChannelManager teamChannelManager;
+    private NametagManager nametagManager;
 
     public static SOYSLinkTeam getInstance() {
         return instance;
@@ -64,6 +69,10 @@ public final class SOYSLinkTeam extends JavaPlugin {
             inviteManager = new InviteManager(this);
             inviteManager.start();
 
+            teamChannelManager = new TeamChannelManager(this);
+            nametagManager = new NametagManager(this);
+            nametagManager.initialize();
+
             registerCommands();
             registerListeners();
             registerPlaceholders();
@@ -77,6 +86,9 @@ public final class SOYSLinkTeam extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (nametagManager != null) {
+            nametagManager.shutdown();
+        }
         if (teamManager != null) {
             teamManager.shutdown();
         }
@@ -113,6 +125,8 @@ public final class SOYSLinkTeam extends JavaPlugin {
 
     private void registerListeners() {
         getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
+        getServer().getPluginManager().registerEvents(new ChatListener(this), this);
+        getServer().getPluginManager().registerEvents(nametagManager, this);
     }
 
     private void registerPlaceholders() {
@@ -136,6 +150,9 @@ public final class SOYSLinkTeam extends JavaPlugin {
         joinMethodRegistry.reload();
         storageManager.initialize();
         teamManager.reloadIndexes();
+        if (nametagManager != null) {
+            nametagManager.refreshAll();
+        }
     }
 
     // ================================================================
@@ -176,5 +193,13 @@ public final class SOYSLinkTeam extends JavaPlugin {
 
     public InviteManager getInviteManager() {
         return inviteManager;
+    }
+
+    public TeamChannelManager getTeamChannelManager() {
+        return teamChannelManager;
+    }
+
+    public NametagManager getNametagManager() {
+        return nametagManager;
     }
 }
