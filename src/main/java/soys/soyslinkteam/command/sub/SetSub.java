@@ -9,10 +9,13 @@ import soys.soyslinkteam.event.TeamSettingChangeEvent;
 import soys.soyslinkteam.permission.TeamAction;
 import soys.soyslinkteam.team.Team;
 import soys.soyslinkteam.util.NameValidator;
+import soys.soyslinkteam.util.PasswordUtil;
 import soys.soyslinkteam.util.Placeholders;
 import soys.soyslinkteam.util.Text;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -33,6 +36,26 @@ public class SetSub extends SubCommand {
     @Override
     public List<String> getAliases() {
         return Arrays.asList("设置", "settings");
+    }
+
+    @Override
+    public List<String> tabComplete(CommandSender sender, String[] args) {
+        if (args.length == 1) {
+            return filter(Arrays.asList("name", "tag", "notice", "public", "password", "cost"), args[0]);
+        }
+        if (args.length == 2) {
+            String key = args[0].toLowerCase();
+            switch (key) {
+                case "public":
+                    return filter(Arrays.asList("on", "off"), args[1]);
+                case "password":
+                case "cost":
+                    return filter(Collections.singletonList("off"), args[1]);
+                default:
+                    return Collections.emptyList();
+            }
+        }
+        return Collections.emptyList();
     }
 
     @Override
@@ -63,6 +86,9 @@ public class SetSub extends SubCommand {
                     break;
                 case "password":
                     setPassword(player, team, label, joined);
+                    break;
+                case "cost":
+                    setCost(player, team, label, joined);
                     break;
                 default:
                     msgList(player, "settings.usage", Placeholders.of("label", label).build());
@@ -231,9 +257,72 @@ public class SetSub extends SubCommand {
         if (!callEvent(pwEvent, player)) {
             return;
         }
-        team.getSettings().setPassword(value);
+        // 存储 SHA-256 哈希，不存储明文
+        boolean caseSensitive = plugin.getConfigManager().isPasswordCaseSensitive();
+        String hashed = PasswordUtil.hash(caseSensitive ? value : value.toLowerCase());
+        team.getSettings().setPassword(hashed);
         plugin.getTeamManager().save(team);
         msg(player, "settings.password.set", Placeholders.of("password", value).build());
+    }
+
+    private void setCost(Player player, Team team, String label, String value) {
+        if (!checkAction(player, team, TeamAction.SET_COST)) {
+            return;
+        }
+        if (!plugin.getConfigManager().isJoinMethodEnabled("economy")) {
+            msg(player, "settings.cost.method-disabled", null);
+            return;
+        }
+        if (value.isEmpty() || value.equalsIgnoreCase("off") || value.equals("0")) {
+            TeamSettingChangeEvent costEvent = new TeamSettingChangeEvent(team,
+                    TeamSettingChangeEvent.SettingType.COST,
+                    String.valueOf(team.getSettings().getEconomyCost()), "0", player);
+            if (!callEvent(costEvent, player)) {
+                return;
+            }
+            team.getSettings().setEconomyCost(0);
+            plugin.getTeamManager().save(team);
+            msg(player, "settings.cost.cleared", null);
+            return;
+        }
+        double cost;
+        try {
+            cost = Double.parseDouble(value);
+        } catch (NumberFormatException e) {
+            msg(player, "settings.cost.invalid", Placeholders.of("input", value).build());
+            return;
+        }
+        if (cost < 0) {
+            msg(player, "settings.cost.invalid", Placeholders.of("input", value).build());
+            return;
+        }
+        double maxCost = plugin.getConfigManager().getEconomyMaxCost();
+        if (maxCost > 0 && cost > maxCost) {
+            msg(player, "settings.cost.too-high",
+                    Placeholders.of("max", formatCost(maxCost)).build());
+            return;
+        }
+        TeamSettingChangeEvent costEvent = new TeamSettingChangeEvent(team,
+                TeamSettingChangeEvent.SettingType.COST,
+                String.valueOf(team.getSettings().getEconomyCost()),
+                String.valueOf(cost), player);
+        if (!callEvent(costEvent, player)) {
+            return;
+        }
+        team.getSettings().setEconomyCost(cost);
+        plugin.getTeamManager().save(team);
+        msg(player, "settings.cost.success",
+                Placeholders.of("cost", formatCost(cost)).build());
+        team.broadcast(plugin.getMessageManager().get("settings.cost.broadcast",
+                Placeholders.of("player", player.getName())
+                        .and("cost", formatCost(cost)).build()));
+    }
+
+    private String formatCost(double cost) {
+        if (cost == Math.floor(cost)) {
+            return String.valueOf((long) cost);
+        }
+        return String.format("%.2f", cost);
     }
 
     /**

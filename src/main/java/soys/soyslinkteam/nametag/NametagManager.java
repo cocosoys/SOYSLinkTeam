@@ -34,9 +34,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * 计分板/昵称完全共存 —— 这是将本插件声明为二者 softdepend 前提下唯一自洽的实现路线。
  * </p>
  * <p>
- * 说明（Spigot 1.12.2 限制）：1.12.2 的 SCOREBOARD_TEAM 数据包不含 collision / visibility /
- * 独立的 name-color 字段，故碰撞规则与名称可见性沿用服务端默认值，角色着色通过前缀尾部
- * 颜色码向下延续到玩家名（受 16 字符前缀上限约束，超长时自动截断以保证客户端不报警）。
+ * 说明（Spigot 1.12.2）：1.12.2 的 SCOREBOARD_TEAM 数据包已包含 nameTagVisibility 与
+ * collisionRule 字段（1.9+ 引入），本插件通过配置项 team.tag.nametag.visibility 与
+ * team.tag.nametag.collision-rule 控制这两个字段。独立的 name-color 字段为 1.13+ 新增，
+ * 1.12.2 中角色着色通过前缀尾部颜色码向下延续到玩家名（受 16 字符前缀上限约束，超长时自动截断）。
  * </p>
  */
 public class NametagManager implements Listener {
@@ -225,11 +226,23 @@ public class NametagManager implements Listener {
                                      String prefix, String suffix,
                                      Collection<String> players, int mode) {
         PacketContainer packet = protocolManager.createPacket(PacketType.Play.Server.SCOREBOARD_TEAM);
-        // 1.12.2 字段顺序: a=name, b=displayName, c=prefix, d=suffix, e=flags(byte), f=players, g=method(int)
+        // 1.12.2 字段顺序: a=name, b=displayName, c=prefix, d=suffix,
+        //                  e=nameTagVisibility(1.9+), f=collisionRule(1.9+),
+        //                  friendlyFire(byte), players(Collection), method(int)
         packet.getStrings().write(0, teamName);
         packet.getStrings().write(1, displayName);
         packet.getStrings().write(2, prefix);
         packet.getStrings().write(3, suffix);
+        // 1.9+ 字段：名称可见性与碰撞规则（create=0 / update=2 模式下生效）
+        if (mode == 0 || mode == 2) {
+            try {
+                packet.getStrings().write(4, plugin.getConfigManager().getNametagVisibility());
+                packet.getStrings().write(5, plugin.getConfigManager().getNametagCollisionRule());
+            } catch (Exception e) {
+                // 极端情况下字段索引不匹配时忽略，不影响基础前缀功能
+                plugin.getLogger().fine("写入 nametag visibility/collision 字段失败: " + e.getMessage());
+            }
+        }
         packet.getBytes().write(0, (byte) 0); // friendlyFire=0, seeFriendlyInvisibles=0
         packet.getSpecificModifier(Collection.class).write(0, players);
         packet.getIntegers().write(0, mode);
@@ -265,8 +278,12 @@ public class NametagManager implements Listener {
 
     /**
      * 将文本截断到指定可见长度，颜色码（§x）计 2，且绝不从颜色码中间截断。
+     * 截断后追加 §r 重置码，防止颜色泄漏到后续玩家名。
      */
     private String fitToLimit(String s, int limit) {
+        if (s == null || s.isEmpty()) {
+            return "";
+        }
         StringBuilder sb = new StringBuilder();
         int len = 0;
         for (int i = 0; i < s.length(); i++) {
@@ -285,6 +302,10 @@ public class NametagManager implements Listener {
             }
             sb.append(c);
             len++;
+        }
+        // 截断后追加重置码，防止颜色泄漏到玩家名
+        if (sb.length() > 0 && !sb.toString().endsWith("\u00a7r")) {
+            sb.append("\u00a7r");
         }
         return sb.toString();
     }

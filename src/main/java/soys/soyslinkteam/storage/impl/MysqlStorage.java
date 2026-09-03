@@ -102,6 +102,7 @@ public class MysqlStorage extends SqlStorage {
                         + "join_password VARCHAR(64),"
                         + "notice VARCHAR(255),"
                         + "tag VARCHAR(32),"
+                        + "economy_cost DOUBLE NOT NULL DEFAULT 0,"
                         + "PRIMARY KEY (id),"
                         + "INDEX idx_name (name)"
                         + ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",

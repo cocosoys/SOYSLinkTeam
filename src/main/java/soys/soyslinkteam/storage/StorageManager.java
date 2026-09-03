@@ -45,6 +45,9 @@ public class StorageManager {
     /** 串行写入线程，保证写顺序 */
     private ExecutorService writeExecutor;
 
+    /** 镜像写入线程池，与主存储写入队列隔离，避免大流量下镜像延迟 */
+    private ExecutorService mirrorExecutor;
+
     public StorageManager(SOYSLinkTeam plugin) {
         this.plugin = plugin;
     }
@@ -63,6 +66,12 @@ public class StorageManager {
 
         this.writeExecutor = Executors.newSingleThreadExecutor(runnable -> {
             Thread thread = new Thread(runnable, "SOYSLinkTeam-Storage");
+            thread.setDaemon(true);
+            return thread;
+        });
+
+        this.mirrorExecutor = Executors.newSingleThreadExecutor(runnable -> {
+            Thread thread = new Thread(runnable, "SOYSLinkTeam-Mirror");
             thread.setDaemon(true);
             return thread;
         });
@@ -141,6 +150,21 @@ public class StorageManager {
                 }
             }
             writeExecutor = null;
+        }
+        if (mirrorExecutor != null) {
+            mirrorExecutor.shutdown();
+            if (awaitWrites) {
+                try {
+                    if (!mirrorExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
+                        plugin.getLogger().warning("镜像写入队列未能在 10 秒内排空，部分镜像数据可能未同步");
+                        mirrorExecutor.shutdownNow();
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    mirrorExecutor.shutdownNow();
+                }
+            }
+            mirrorExecutor = null;
         }
         for (DataStorage storage : storages.values()) {
             try {
@@ -393,7 +417,12 @@ public class StorageManager {
             }
         };
         if (plugin.getConfigManager().isMirrorAsync()) {
-            submit(task);
+            // 镜像写入使用独立线程池，与主存储写入队列隔离，避免大流量下镜像延迟
+            if (mirrorExecutor != null && !mirrorExecutor.isShutdown()) {
+                mirrorExecutor.submit(task);
+            } else {
+                task.run();
+            }
         } else {
             task.run();
         }

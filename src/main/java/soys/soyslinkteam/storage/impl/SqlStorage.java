@@ -342,8 +342,8 @@ public abstract class SqlStorage implements DataStorage {
 
     private void writeTeam(Connection conn, Team team) throws SQLException {
         String teamSql = "REPLACE INTO " + teamsTable()
-                + " (id, name, leader, created_at, is_open, join_password, notice, tag)"
-                + " VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                + " (id, name, leader, created_at, is_open, join_password, notice, tag, economy_cost)"
+                + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement statement = conn.prepareStatement(teamSql)) {
             statement.setString(1, team.getId().toString());
             statement.setString(2, team.getName());
@@ -353,6 +353,7 @@ public abstract class SqlStorage implements DataStorage {
             statement.setString(6, team.getSettings().getPassword());
             statement.setString(7, team.getSettings().getNotice());
             statement.setString(8, team.getSettings().getTag());
+            statement.setDouble(9, team.getSettings().getEconomyCost());
             statement.executeUpdate();
         }
 
@@ -410,6 +411,11 @@ public abstract class SqlStorage implements DataStorage {
         team.getSettings().setPassword(rs.getString("join_password"));
         team.getSettings().setNotice(rs.getString("notice"));
         team.getSettings().setTag(rs.getString("tag"));
+        try {
+            team.getSettings().setEconomyCost(rs.getDouble("economy_cost"));
+        } catch (SQLException ignored) {
+            // 旧表无 economy_cost 列时使用默认值 0
+        }
         return team;
     }
 

@@ -4,6 +4,7 @@ import soys.soyslinkteam.SOYSLinkTeam;
 import soys.soyslinkteam.join.JoinContext;
 import soys.soyslinkteam.join.JoinResult;
 import soys.soyslinkteam.team.Team;
+import soys.soyslinkteam.util.PasswordUtil;
 import soys.soyslinkteam.util.Placeholders;
 
 import java.util.Map;
@@ -90,9 +91,8 @@ public class    PasswordJoinMethod extends AbstractJoinMethod {
 
         String expected = team.getSettings().getPassword();
         String provided = context.getArgument();
-        boolean matched = isCaseSensitive()
-                ? expected.equals(provided)
-                : expected.equalsIgnoreCase(provided);
+        // 使用 PasswordUtil 比对：优先哈希比对，回退明文比对（兼容旧数据）
+        boolean matched = PasswordUtil.matches(provided, expected, isCaseSensitive());
 
         if (matched) {
             attempts.remove(key);

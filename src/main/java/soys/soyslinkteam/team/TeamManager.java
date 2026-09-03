@@ -54,12 +54,55 @@ public class TeamManager {
     /** 常驻索引：队伍 ID -> 队伍名称 */
     private final Map<UUID, String> teamNames = new ConcurrentHashMap<>();
 
+    /** 名称反向索引（区分大小写）：原始名称 -> 队伍 ID，O(1) 按名称查找 */
+    private final Map<String, UUID> nameToIdExact = new ConcurrentHashMap<>();
+
+    /** 名称反向索引（忽略大小写）：小写名称 -> 队伍 ID */
+    private final Map<String, UUID> nameToIdLower = new ConcurrentHashMap<>();
+
     private BukkitTask unloadTask;
     private BukkitTask autoSaveTask;
     private BukkitTask autoTransferTask;
 
     public TeamManager(SOYSLinkTeam plugin) {
         this.plugin = plugin;
+    }
+
+    // ================================================================
+    //  名称反向索引维护
+    // ================================================================
+
+    /**
+     * 将队伍名称加入反向索引（同时维护区分大小写和忽略大小写两个索引）。
+     */
+    private void indexName(UUID teamId, String name) {
+        if (teamId == null || name == null || name.isEmpty()) {
+            return;
+        }
+        nameToIdExact.put(name, teamId);
+        nameToIdLower.put(name.toLowerCase(), teamId);
+    }
+
+    /**
+     * 从反向索引移除队伍名称（用 remove(key, value) 防止误删同名的其他队伍）。
+     */
+    private void unindexName(UUID teamId, String name) {
+        if (teamId == null || name == null || name.isEmpty()) {
+            return;
+        }
+        nameToIdExact.remove(name, teamId);
+        nameToIdLower.remove(name.toLowerCase(), teamId);
+    }
+
+    /**
+     * 从 teamNames 移除并同步清理反向索引，返回被移除的名称。
+     */
+    private String removeTeamName(UUID teamId) {
+        String name = teamNames.remove(teamId);
+        if (name != null) {
+            unindexName(teamId, name);
+        }
+        return name;
     }
 
     // ================================================================
@@ -80,11 +123,16 @@ public class TeamManager {
     public void reloadIndexes() {
         playerIndex.clear();
         teamNames.clear();
+        nameToIdExact.clear();
+        nameToIdLower.clear();
         try {
             Map<UUID, UUID> index = plugin.getStorageManager().loadPlayerIndex();
             playerIndex.putAll(index);
             Map<UUID, String> names = plugin.getStorageManager().loadTeamNames();
             teamNames.putAll(names);
+            for (Map.Entry<UUID, String> entry : names.entrySet()) {
+                indexName(entry.getKey(), entry.getValue());
+            }
             plugin.getLogger().info("已装载索引: " + names.size() + " 支队伍，"
                     + index.size() + " 名玩家");
         } catch (Exception e) {
@@ -256,23 +304,16 @@ public class TeamManager {
     }
 
     /**
-     * 按名称查找队伍 ID（忽略大小写，取决于配置）。
+     * 按名称查找队伍 ID（O(1) 反向索引查找，忽略大小写取决于配置）。
      */
     public UUID getTeamIdByName(String name) {
         if (name == null || name.isEmpty()) {
             return null;
         }
-        boolean caseSensitive = plugin.getConfigManager().isNameCaseSensitive();
-        for (Map.Entry<UUID, String> entry : teamNames.entrySet()) {
-            String value = entry.getValue();
-            if (value == null) {
-                continue;
-            }
-            if (caseSensitive ? value.equals(name) : value.equalsIgnoreCase(name)) {
-                return entry.getKey();
-            }
+        if (plugin.getConfigManager().isNameCaseSensitive()) {
+            return nameToIdExact.get(name);
         }
-        return null;
+        return nameToIdLower.get(name.toLowerCase());
     }
 
     /**
@@ -326,7 +367,7 @@ public class TeamManager {
         plugin.getStorageManager().loadTeamAsync(teamId, team -> {
             if (team == null) {
                 // 索引与存储不一致，清理脏索引
-                teamNames.remove(teamId);
+                removeTeamName(teamId);
                 callback.accept(null);
                 return;
             }
@@ -389,6 +430,7 @@ public class TeamManager {
 
         activate(team);
         teamNames.put(team.getId(), name);
+        indexName(team.getId(), name);
         playerIndex.put(leader.getUniqueId(), team.getId());
         plugin.getStorageManager().saveTeamAsync(team);
         return team;
@@ -413,7 +455,7 @@ public class TeamManager {
         for (TeamMember member : team.getMembers()) {
             playerIndex.remove(member.getUuid());
         }
-        teamNames.remove(team.getId());
+        removeTeamName(team.getId());
         activeTeams.remove(team.getId());
         plugin.getStorageManager().deleteTeamAsync(team.getId());
         debug("已解散队伍 " + team.getName());
@@ -467,7 +509,7 @@ public class TeamManager {
         for (TeamMember member : team.getMembers()) {
             playerIndex.remove(member.getUuid());
         }
-        teamNames.remove(team.getId());
+        removeTeamName(team.getId());
         activeTeams.remove(team.getId());
         plugin.getStorageManager().deleteTeamAsync(team.getId());
 
@@ -540,8 +582,11 @@ public class TeamManager {
      * 修改队伍名称并同步名称索引。
      */
     public void renameTeam(Team team, String newName) {
+        String oldName = team.getName();
         team.setName(newName);
         teamNames.put(team.getId(), newName);
+        unindexName(team.getId(), oldName);
+        indexName(team.getId(), newName);
         plugin.getStorageManager().saveTeamAsync(team);
     }
 

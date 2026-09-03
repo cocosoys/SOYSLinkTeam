@@ -42,6 +42,9 @@ public enum TeamAction {
     /** 设置或清除入队口令 */
     SET_PASSWORD("设置口令"),
 
+    /** 设置入队费用（经济消耗入队） */
+    SET_COST("设置入队费用"),
+
     /** 查看队伍详情 */
     VIEW_INFO("查看详情"),
 

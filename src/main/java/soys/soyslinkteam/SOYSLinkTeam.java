@@ -40,6 +40,7 @@ public final class SOYSLinkTeam extends JavaPlugin {
     private PlaceholderHook placeholderHook;
     private TeamChannelManager teamChannelManager;
     private NametagManager nametagManager;
+    private soys.soyslinkteam.luckperms.LuckPermsContextHook luckPermsContextHook;
 
     public static SOYSLinkTeam getInstance() {
         return instance;
@@ -77,6 +78,10 @@ public final class SOYSLinkTeam extends JavaPlugin {
             registerListeners();
             registerPlaceholders();
 
+            // LuckPerms 上下文注入（软依赖，不可用时自动停用）
+            luckPermsContextHook = new soys.soyslinkteam.luckperms.LuckPermsContextHook(this);
+            luckPermsContextHook.initialize();
+
             getLogger().info("SOYSLinkTeam 已启用，共加载 "
                     + teamManager.getTotalCount() + " 支队伍。");
         } catch (Exception e) {
@@ -104,6 +109,9 @@ public final class SOYSLinkTeam extends JavaPlugin {
             } catch (Throwable ignored) {
                 // 卸载阶段忽略异常
             }
+        }
+        if (luckPermsContextHook != null) {
+            luckPermsContextHook.shutdown();
         }
         getLogger().info("SOYSLinkTeam 已停用。");
     }
@@ -201,5 +209,9 @@ public final class SOYSLinkTeam extends JavaPlugin {
 
     public NametagManager getNametagManager() {
         return nametagManager;
+    }
+
+    public soys.soyslinkteam.luckperms.LuckPermsContextHook getLuckPermsContextHook() {
+        return luckPermsContextHook;
     }
 }

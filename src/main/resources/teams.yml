@@ -85,9 +85,17 @@ team:
       # 是否按角色着色玩家名（队长金 / 副队长蓝 / 队员默认）
       # 注意：Spigot 1.12.2 前缀上限 16 字符，角色颜色码会占用额度，超长时自动截断
       use-role-color: true
-      # 预留（Spigot 1.13+ 数据包才支持，1.12.2 暂不生效）
+      # 玩家间碰撞规则（1.9+ 数据包字段，1.12.2 支持）
+      #   always          - 始终可碰撞
+      #   pushOtherTeams  - 仅与其他队伍碰撞
+      #   pushOwnTeam     - 仅与自己队伍碰撞
+      #   never           - 完全无碰撞
       collision-rule: NEVER
-      # 预留（Spigot 1.13+ 数据包才支持，1.12.2 暂不生效）
+      # 玩家名可见性（1.9+ 数据包字段，1.12.2 支持）
+      #   always              - 始终可见
+      #   hideForOtherTeams   - 对其他队伍隐藏
+      #   hideForOwnTeam      - 对自己队伍隐藏
+      #   never               - 完全隐藏
       visibility: ALWAYS
 
   # --------------------------------------------------------------
@@ -143,7 +151,9 @@ team:
 # ============================================================================
 join:
 
-  # 全局：玩家同时最多加入几个队伍（第一版固定为 1，预留字段）
+  # 玩家同时最多可加入的队伍数量
+  # 注意：当前版本（v1.0）数据模型固定为 1 队，配置值 >1 时会在启动时给出警告并被限制为 1，
+  #       多队支持将在未来版本实现。此处保留配置项以便平滑升级。
   max-teams-per-player: 1
 
   methods:
@@ -182,6 +192,16 @@ join:
       attempt-cooldown: 60
       # 口令是否区分大小写
       case-sensitive: true
+
+    # ---------- 经济消耗加入（依赖 Vault + 经济插件） ----------
+    economy:
+      enabled: false
+      order: 40
+      # 单队入队费用上限，0 = 不限制
+      max-cost: 1000
+      # 说明：队长通过 /steam set cost <金额> 设置本队入队费用，
+      #       玩家加入时自动扣除。设置为 0 或 off 可清除费用。
+      #       管理员（soyslinkteam.admin.bypass）可免费用。
 
 
 # ============================================================================
@@ -224,6 +244,7 @@ permission:
   #    SET_NOTICE    修改队伍公告
   #    SET_PUBLIC    切换公开状态
   #    SET_PASSWORD  设置/清除口令
+  #    SET_COST      设置入队费用
   #    VIEW_INFO     查看队伍详情
   #    LEAVE         退出队伍
   # --------------------------------------------------------------
@@ -236,6 +257,7 @@ permission:
       - SET_NOTICE
       - SET_PUBLIC
       - SET_PASSWORD
+      - SET_COST
       - VIEW_INFO
       - LEAVE
     MEMBER:
@@ -244,3 +266,22 @@ permission:
 
   # 副队长(ADMIN 角色)人数上限，0 = 不允许设置副队长
   max-team-admins: 2
+
+  # --------------------------------------------------------------
+  #  VIP 权限体系（依赖 LuckPerms，读取玩家 vip-tier 元数据）
+  #  设置玩家 VIP 等级: lp user <玩家> meta set vip-tier <等级>
+  #  启用后需在上方 providers 列表中加入 vip
+  # --------------------------------------------------------------
+  vip:
+    enabled: false
+    tiers:
+      # 示例：svip 等级允许邀请、设置公告、切换公开状态
+      svip:
+        allow:
+          - INVITE
+          - SET_NOTICE
+          - SET_PUBLIC
+      # 示例：vvip 等级允许全部管理动作
+      vvip:
+        allow:
+          - '*'

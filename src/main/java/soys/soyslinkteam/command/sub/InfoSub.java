@@ -101,6 +101,13 @@ public class InfoSub extends SubCommand {
         lines.add(mm.get("info.locked",
                 Placeholders.of("locked", team.getSettings().hasPassword() ? trueText : falseText)
                         .build()));
+        if (team.getSettings().hasEconomyCost()) {
+            double cost = team.getSettings().getEconomyCost();
+            String costText = (cost == Math.floor(cost))
+                    ? String.valueOf((long) cost)
+                    : String.format("%.2f", cost);
+            lines.add(mm.get("info.cost", Placeholders.of("cost", costText).build()));
+        }
         if (noticeEnabled && team.getSettings().hasNotice()) {
             lines.add(mm.get("info.notice",
                     Placeholders.of("notice", team.getSettings().getNotice()).build()));

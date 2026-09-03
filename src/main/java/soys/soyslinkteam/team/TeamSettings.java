@@ -18,6 +18,9 @@ public class TeamSettings {
     /** 队伍简称 */
     private volatile String tag = "";
 
+    /** 入队费用（经济消耗入队），0 表示不收费 */
+    private volatile double economyCost = 0.0;
+
     public boolean isOpen() {
         return open;
     }
@@ -60,5 +63,17 @@ public class TeamSettings {
 
     public boolean hasTag() {
         return tag != null && !tag.isEmpty();
+    }
+
+    public double getEconomyCost() {
+        return economyCost;
+    }
+
+    public void setEconomyCost(double economyCost) {
+        this.economyCost = Math.max(0, economyCost);
+    }
+
+    public boolean hasEconomyCost() {
+        return economyCost > 0;
     }
 }

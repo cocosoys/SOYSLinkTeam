@@ -35,22 +35,71 @@ public class MessageManager {
     }
 
     public void reload() {
-        File file = new File(plugin.getDataFolder(), "messages.yml");
+        String language = plugin.getConfigManager().getLanguage();
+        String fileName = resolveFileName(language);
+
+        File file = new File(plugin.getDataFolder(), fileName);
         if (!file.exists()) {
-            plugin.saveResource("messages.yml", false);
+            // 尝试从 jar 释放对应语言文件，失败则回退到默认 messages.yml
+            if (!trySaveLanguageResource(language, fileName)) {
+                file = new File(plugin.getDataFolder(), "messages.yml");
+                if (!file.exists()) {
+                    plugin.saveResource("messages.yml", false);
+                }
+            }
         }
         this.messages = YamlConfiguration.loadConfiguration(file);
-        this.defaults = loadInternalDefaults();
+        this.defaults = loadInternalDefaults(language);
         if (defaults != null) {
             messages.setDefaults(defaults);
         }
         this.prefix = messages.getString(PREFIX_KEY, "");
     }
 
-    private FileConfiguration loadInternalDefaults() {
-        try (InputStream stream = plugin.getResource("messages.yml")) {
+    /**
+     * 根据语言配置解析消息文件名。
+     * zh_cn / 空 -> messages.yml（默认中文）
+     * en -> messages_en.yml
+     */
+    private String resolveFileName(String language) {
+        if (language == null || language.isEmpty()
+                || language.equalsIgnoreCase("zh_cn")
+                || language.equalsIgnoreCase("zhcn")
+                || language.equalsIgnoreCase("zh")) {
+            return "messages.yml";
+        }
+        return "messages_" + language.toLowerCase() + ".yml";
+    }
+
+    /**
+     * 尝试从 jar 释放指定语言的消息文件到插件目录。
+     * @return true 表示成功释放，false 表示 jar 中不存在该语言文件
+     */
+    private boolean trySaveLanguageResource(String language, String fileName) {
+        String resourcePath = resolveFileName(language);
+        try (InputStream stream = plugin.getResource(resourcePath)) {
             if (stream == null) {
-                return null;
+                return false;
+            }
+            plugin.saveResource(resourcePath, false);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private FileConfiguration loadInternalDefaults(String language) {
+        String resourcePath = resolveFileName(language);
+        try (InputStream stream = plugin.getResource(resourcePath)) {
+            if (stream == null) {
+                // 指定语言不存在时回退到默认中文
+                try (InputStream fallback = plugin.getResource("messages.yml")) {
+                    if (fallback == null) {
+                        return null;
+                    }
+                    return YamlConfiguration.loadConfiguration(
+                            new InputStreamReader(fallback, StandardCharsets.UTF_8));
+                }
             }
             return YamlConfiguration.loadConfiguration(
                     new InputStreamReader(stream, StandardCharsets.UTF_8));

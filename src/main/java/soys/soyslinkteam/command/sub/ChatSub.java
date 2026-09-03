@@ -3,6 +3,7 @@ package soys.soyslinkteam.command.sub;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import soys.soyslinkteam.SOYSLinkTeam;
+import soys.soyslinkteam.command.SubCommand;
 import soys.soyslinkteam.team.Team;
 import soys.soyslinkteam.util.Placeholders;
 

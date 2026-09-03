@@ -224,14 +224,47 @@ public class ConfigManager {
         return rulesConfig.getString("team.tag.nametag.separator", " ");
     }
 
-    /** 碰撞规则: ALWAYS / NEVER / OTHER_TEAMS / OTHER_PLAYERS */
+    /**
+     * 碰撞规则，返回 SCOREBOARD_TEAM 数据包可用的小写驼峰格式。
+     * 合法值: always / pushOtherTeams / pushOwnTeam / never
+     */
     public String getNametagCollisionRule() {
-        return rulesConfig.getString("team.tag.nametag.collision-rule", "NEVER").toUpperCase();
+        String raw = rulesConfig.getString("team.tag.nametag.collision-rule", "NEVER");
+        return normalizePacketEnum(raw, "never");
     }
 
-    /** 名称可见性: ALWAYS / NEVER / HIDE_FOR_OTHER_TEAMS / HIDE_FOR_OWN_TEAM 等 */
+    /**
+     * 名称可见性，返回 SCOREBOARD_TEAM 数据包可用的小写驼峰格式。
+     * 合法值: always / hideForOtherTeams / hideForOwnTeam / never
+     */
     public String getNametagVisibility() {
-        return rulesConfig.getString("team.tag.nametag.visibility", "ALWAYS").toUpperCase();
+        String raw = rulesConfig.getString("team.tag.nametag.visibility", "ALWAYS");
+        return normalizePacketEnum(raw, "always");
+    }
+
+    /**
+     * 将配置中的大写下划线/大写枚举值转换为数据包要求的小写驼峰格式。
+     * 例: NEVER→never, HIDE_FOR_OTHER_TEAMS→hideForOtherTeams
+     */
+    private String normalizePacketEnum(String raw, String fallback) {
+        if (raw == null || raw.isEmpty()) {
+            return fallback;
+        }
+        String lower = raw.trim().toLowerCase();
+        // 已经是小写驼峰，直接返回
+        if (lower.equals("always") || lower.equals("never")
+                || lower.equals("pushotherteams") || lower.equals("pushownteam")
+                || lower.equals("hideforotherteams") || lower.equals("hideforownteam")) {
+            // 还原正确的驼峰大小写
+            switch (lower) {
+                case "pushotherteams": return "pushOtherTeams";
+                case "pushownteam": return "pushOwnTeam";
+                case "hideforotherteams": return "hideForOtherTeams";
+                case "hideforownteam": return "hideForOwnTeam";
+                default: return lower;
+            }
+        }
+        return fallback;
     }
 
     public boolean isNoticeEnabled() {
@@ -297,6 +330,15 @@ public class ConfigManager {
     //  入队方式（来源: teams.yml）
     // ================================================================
 
+    /**
+     * 玩家同时最多可加入的队伍数量。
+     * <p>当前版本数据模型固定为 1 队（playerIndex 为 UUID→UUID 一对一映射），
+     * 配置值 >1 时会在启动时给出警告，多队支持将在未来版本实现。</p>
+     */
+    public int getMaxTeamsPerPlayer() {
+        return Math.max(1, rulesConfig.getInt("join.max-teams-per-player", 1));
+    }
+
     public boolean isJoinMethodEnabled(String methodId) {
         return rulesConfig.getBoolean("join.methods." + methodId + ".enabled", false);
     }
@@ -315,6 +357,21 @@ public class ConfigManager {
 
     public int getPasswordMaxLength() {
         return rulesConfig.getInt("join.methods.password.max-length", 16);
+    }
+
+    /**
+     * 口令是否区分大小写（影响哈希计算与验证）。
+     */
+    public boolean isPasswordCaseSensitive() {
+        return rulesConfig.getBoolean("join.methods.password.case-sensitive", true);
+    }
+
+    /**
+     * 经济消耗入队的单队费用上限，0 表示不限制。
+     */
+    public double getEconomyMaxCost() {
+        ConfigurationSection section = getJoinMethodSection("economy");
+        return section == null ? 0 : section.getDouble("max-cost", 0);
     }
 
     // ================================================================
@@ -341,6 +398,13 @@ public class ConfigManager {
 
     public int getMaxTeamAdmins() {
         return rulesConfig.getInt("permission.max-team-admins", 2);
+    }
+
+    /**
+     * 获取 VIP 权限配置节（permission.vip），未配置时返回 null。
+     */
+    public ConfigurationSection getVipSection() {
+        return rulesConfig.getConfigurationSection("permission.vip");
     }
 
     // ================================================================

@@ -4,6 +4,7 @@ import org.bukkit.entity.Player;
 import soys.soyslinkteam.SOYSLinkTeam;
 import soys.soyslinkteam.permission.impl.AdminPermissionProvider;
 import soys.soyslinkteam.permission.impl.RolePermissionProvider;
+import soys.soyslinkteam.permission.impl.VipPermissionProvider;
 import soys.soyslinkteam.team.Team;
 
 import java.util.ArrayList;
@@ -51,6 +52,7 @@ public class PermissionManager {
         registry.clear();
         register(new AdminPermissionProvider());
         register(new RolePermissionProvider(plugin));
+        register(new VipPermissionProvider(plugin));
         rebuildChain();
     }
 

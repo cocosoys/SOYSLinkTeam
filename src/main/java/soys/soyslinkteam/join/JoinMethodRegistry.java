@@ -6,6 +6,7 @@ import soys.soyslinkteam.event.PlayerJoinTeamEvent;
 import soys.soyslinkteam.join.impl.InviteJoinMethod;
 import soys.soyslinkteam.join.impl.PasswordJoinMethod;
 import soys.soyslinkteam.join.impl.PublicJoinMethod;
+import soys.soyslinkteam.join.impl.EconomyJoinMethod;
 import soys.soyslinkteam.team.Team;
 import soys.soyslinkteam.team.TeamRole;
 import soys.soyslinkteam.util.CooldownManager;
@@ -54,6 +55,14 @@ public class JoinMethodRegistry {
         register(new InviteJoinMethod(plugin));
         register(new PublicJoinMethod(plugin));
         register(new PasswordJoinMethod(plugin));
+        register(new EconomyJoinMethod(plugin));
+
+        // 检查 max-teams-per-player 配置：当前版本数据模型固定为1队
+        int maxTeams = plugin.getConfigManager().getMaxTeamsPerPlayer();
+        if (maxTeams > 1) {
+            plugin.getLogger().warning("配置项 join.max-teams-per-player=" + maxTeams
+                    + "，但当前版本数据模型固定为 1 队，该值将被限制为 1。多队支持将在未来版本实现。");
+        }
     }
 
     public void register(JoinMethod method) {
@@ -176,7 +185,11 @@ public class JoinMethodRegistry {
     private JoinResult precheck(JoinContext context) {
         Team team = context.getTeam();
 
-        if (plugin.getTeamManager().hasTeam(context.getPlayer().getUniqueId())) {
+        // 玩家队伍数量上限校验：当前版本数据模型固定为1队（hasTeam 即代表 1 队），
+        // 用 Math.min(maxTeams, 1) 保证即使配置值 >1 也不会突破当前架构限制。
+        int maxTeams = plugin.getConfigManager().getMaxTeamsPerPlayer();
+        int currentTeams = plugin.getTeamManager().hasTeam(context.getPlayer().getUniqueId()) ? 1 : 0;
+        if (currentTeams >= Math.min(maxTeams, 1)) {
             return JoinResult.denied("team.already-in-team",
                     Placeholders.of("team", currentTeamName(context)).build());
         }

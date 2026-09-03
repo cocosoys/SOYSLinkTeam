@@ -21,7 +21,9 @@ public class TeamSettingChangeEvent extends TeamEvent {
         /** 公开状态 */
         PUBLIC,
         /** 入队口令 */
-        PASSWORD
+        PASSWORD,
+        /** 入队费用（经济消耗入队） */
+        COST
     }
 
     private final SettingType setting;

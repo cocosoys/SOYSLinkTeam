@@ -265,6 +265,7 @@ public class YamlStorage implements DataStorage {
         config.set(base + ".settings.password", team.getSettings().getPassword());
         config.set(base + ".settings.notice", team.getSettings().getNotice());
         config.set(base + ".settings.tag", team.getSettings().getTag());
+        config.set(base + ".settings.economy-cost", team.getSettings().getEconomyCost());
 
         // 整体重写成员节点，避免残留已退出的成员
         config.set(base + ".members", null);
@@ -291,6 +292,7 @@ public class YamlStorage implements DataStorage {
         team.getSettings().setPassword(section.getString("settings.password"));
         team.getSettings().setNotice(section.getString("settings.notice", ""));
         team.getSettings().setTag(section.getString("settings.tag", ""));
+        team.getSettings().setEconomyCost(section.getDouble("settings.economy-cost", 0.0));
 
         ConfigurationSection members = section.getConfigurationSection("members");
         if (members != null) {

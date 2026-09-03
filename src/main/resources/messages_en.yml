@@ -1,0 +1,322 @@
+# ============================================================================
+#  SOYSLinkTeam - Messages (en_US)
+# ----------------------------------------------------------------------------
+#  Color codes use & symbol.
+#  Empty string '' means the message will not be sent.
+#  List format (multi-line messages) is supported, e.g. help.player.
+# ============================================================================
+
+# Unified prefix for all messages, referenced via {prefix} placeholder
+prefix: '&8[&bTeam&8] &r'
+
+# ============================================================================
+#  General
+# ============================================================================
+general:
+  no-permission: '{prefix}&cYou do not have permission to perform this action.'
+  player-only: '{prefix}&cThis command can only be executed by a player.'
+  unknown-command: '{prefix}&cUnknown subcommand &f{input}&c, type &f/{label} help &cfor help.'
+  player-not-found: '{prefix}&cPlayer &f{player} &cnot found.'
+  player-offline: '{prefix}&cPlayer &f{player} &cis currently offline.'
+  invalid-number: '{prefix}&c&f{input} &cis not a valid number.'
+  reload-success: '{prefix}&aConfiguration reloaded in &f{ms}ms&a.'
+  reload-failed: '{prefix}&cConfiguration reload failed, check console for details.'
+  cooldown: '{prefix}&cAction too frequent, please retry in &f{seconds} &cseconds.'
+  storage-error: '{prefix}&cStorage operation failed, contact an administrator.'
+  confirm-required: '{prefix}&ePlease re-enter this command within &f{seconds} &eseconds to confirm.'
+  confirm-expired: '{prefix}&cConfirmation timed out, action cancelled.'
+  operation-cancelled: '{prefix}&7Action cancelled.'
+
+# ============================================================================
+#  Events (feedback for team operations that can be cancelled by other plugins)
+# ============================================================================
+event:
+  cancelled: '{prefix}&cAction was cancelled.{reason}'
+
+# ============================================================================
+#  Team - Create / Disband
+# ============================================================================
+team:
+  already-in-team: '{prefix}&cYou are already in team &f{team}&c, please leave first.'
+  not-in-team: '{prefix}&cYou have not joined any team.'
+  target-not-in-team: '{prefix}&cPlayer &f{player} &cis not in any team.'
+  target-not-in-your-team: '{prefix}&cPlayer &f{player} &cis not in your team.'
+  team-not-found: '{prefix}&cTeam &f{team} &cnot found.'
+  team-full: '{prefix}&cTeam &f{team} &cis full &7({size}/{max})&c.'
+
+  create:
+    usage: '{prefix}&cUsage: &f/{label} create <team name>'
+    success: '{prefix}&aTeam &f{team} &acreated! Type &f/{label} invite <player> &ato invite teammates.'
+    name-too-short: '{prefix}&cTeam name must be at least &f{min} &ccharacters.'
+    name-too-long: '{prefix}&cTeam name can be at most &f{max} &ccharacters.'
+    name-invalid: '{prefix}&cTeam name contains invalid characters, only letters, numbers and underscores are allowed.'
+    name-blacklisted: '{prefix}&cTeam name contains a blacklisted word.'
+    name-duplicate: '{prefix}&cA team named &f{team} &calready exists, please choose another name.'
+
+  disband:
+    confirm: '{prefix}&eAre you sure you want to disband team &f{team}&e? This action cannot be undone.'
+    success: '{prefix}&aTeam &f{team} &ahas been disbanded.'
+    broadcast: '{prefix}&cTeam &f{team} &chas been disbanded by leader &f{player}&c.'
+    admin-broadcast: '{prefix}&cTeam &f{team} &chas been forcefully disbanded by an administrator.'
+    # Auto-disband when last member leaves
+    empty: '{prefix}&7Team &f{team} &7was automatically disbanded because the last member left.'
+    # Auto-transfer when leader goes offline
+    autotransfer:
+      notice: '{prefix}&7Leader &f{old} &7has been offline for too long, leadership transferred to &f{player}&7.'
+
+# ============================================================================
+#  Team - Member Flow
+# ============================================================================
+member:
+  join-broadcast: '{prefix}&a{player} &7joined the team.&8({size}/{max})'
+  leave-broadcast: '{prefix}&e{player} &7left the team.&8({size}/{max})'
+  leave-success: '{prefix}&aYou have left team &f{team}&a.'
+  leave-leader-denied: '{prefix}&cYou are the leader, use &f/{label} transfer <player> &cto transfer leadership first, or &f/{label} disband &cto disband.'
+  leave-leader-transferred: '{prefix}&eYou left the team, leadership was automatically transferred to &f{player}&e.'
+  leave-leader-disbanded: '{prefix}&eYou left the team, the team was disbanded because it was empty.'
+  rejoin-cooldown: '{prefix}&cYou recently left a team, please wait &f{seconds} &cseconds before joining again.'
+
+  kick:
+    usage: '{prefix}&cUsage: &f/{label} kick <player>'
+    success: '{prefix}&aKicked &f{player} &afrom the team.'
+    kicked:
+      - '{prefix}&cYou have been kicked from team &f{team} &cby &f{operator}&c.'
+      - '&7To rejoin, contact the leader or a member to invite you again.'
+    broadcast: '{prefix}&c{player} &7was kicked from the team by &f{operator}&7.'
+    cannot-kick-self: '{prefix}&cYou cannot kick yourself, use &f/{label} leave&c.'
+    cannot-kick-leader: '{prefix}&cYou cannot kick the leader.'
+    cannot-kick-same-role: '{prefix}&cYou cannot kick members of the same or higher rank.'
+
+  transfer:
+    usage: '{prefix}&cUsage: &f/{label} transfer <player>'
+    success: '{prefix}&aYou have transferred leadership to &f{player}&a.'
+    received: '{prefix}&6You are now the new leader of team &f{team}&6!'
+    broadcast: '{prefix}&6{player} &7became the new leader.'
+    cannot-transfer-self: '{prefix}&cYou are already the leader.'
+
+  promote:
+    usage: '{prefix}&cUsage: &f/{label} promote <player>'
+    success: '{prefix}&aPromoted &f{player} &ato co-leader.'
+    received: '{prefix}&eYou have been promoted to co-leader of team &f{team}&e.'
+    already-admin: '{prefix}&c&f{player} &cis already a co-leader.'
+    limit-reached: '{prefix}&cCo-leader limit reached: &f{max} &cmembers.'
+    disabled: '{prefix}&cCo-leader feature is not enabled on this server.'
+
+  demote:
+    usage: '{prefix}&cUsage: &f/{label} demote <player>'
+    success: '{prefix}&aDemoted &f{player} &ato regular member.'
+    received: '{prefix}&eYou have been demoted to regular member of team &f{team}&e.'
+    not-admin: '{prefix}&c&f{player} &cis not a co-leader.'
+
+# ============================================================================
+#  Join Methods
+# ============================================================================
+join:
+  usage: '{prefix}&cUsage: &f/{label} join <team name> [password]'
+  no-method-available: '{prefix}&cYou cannot join team &f{team}&c: no available join method is open.'
+  method-disabled: '{prefix}&cThe "{method}" join method is not enabled on this server.'
+  success: '{prefix}&aYou have joined team &f{team}&a!'
+
+  # ---------- Invite ----------
+  invite:
+    usage: '{prefix}&cUsage: &f/{label} invite <player>'
+    sent: '{prefix}&aSent a team invite to &f{player}&a, valid for &f{seconds} &aseconds.'
+    received: '{prefix}&e{player} &6invited you to join team &f{team}&6!'
+    received-hint: '{prefix}&7Type &a/{label} accept {team} &7to accept, or &c/{label} deny {team} &7to decline.'
+    already-invited: '{prefix}&cYou have already invited &f{player}&c, please retry in &f{seconds} &cseconds.'
+    already-in-team: '{prefix}&cPlayer &f{player} &cis already in another team.'
+    invite-self: '{prefix}&cYou cannot invite yourself.'
+    offline-denied: '{prefix}&cInviting offline players is not allowed on this server.'
+    pending-limit: '{prefix}&cPlayer &f{player} &chas reached the pending invite limit.'
+    expired:
+      - '{prefix}&7The invite from team &f{team} &7has expired.'
+      - '&7To join, ask the leader to invite you again.'
+    cancelled: '{prefix}&7The invite from team &f{team} &7is no longer valid.'
+
+    accept:
+      usage: '{prefix}&cUsage: &f/{label} accept <team name>'
+      no-pending: '{prefix}&cYou have no pending team invites.'
+      not-found: '{prefix}&cYou have no invite from team &f{team}&c.'
+      broadcast: '{prefix}&a{player} &7accepted the invite and joined the team.'
+      multiple-hint: '{prefix}&eYou have multiple pending invites, please specify a team name: &f{teams}'
+
+    deny:
+      usage: '{prefix}&cUsage: &f/{label} deny <team name>'
+      success: '{prefix}&7You declined the invite from team &f{team}&7.'
+      notify-inviter: '{prefix}&c{player} &7declined your team invite.'
+
+  # ---------- Public Join ----------
+  public:
+    not-public: '{prefix}&cTeam &f{team} &cis not public, cannot join directly.'
+    leader-offline: '{prefix}&cThe leader of team &f{team} &cis offline, cannot join for now.'
+
+  # ---------- Password Join ----------
+  password:
+    required: '{prefix}&cTeam &f{team} &crequires a password, usage: &f/{label} join {team} <password>'
+    incorrect: '{prefix}&cIncorrect password.&7(Attempts remaining: {remaining})'
+    locked: '{prefix}&cToo many failed attempts, please retry in &f{seconds} &cseconds.'
+
+  # ---------- Economy Join ----------
+  economy:
+    insufficient: '{prefix}&cJoining team &f{team} &crequires &f{cost}&c, but your balance is only &f{balance}&c.'
+    charge-failed: '{prefix}&cFailed to charge join fee &f{cost}&c, please contact an administrator.'
+
+# ============================================================================
+#  Team Settings (/team set ...)
+# ============================================================================
+settings:
+  usage:
+    - '{prefix}&eTeam settings commands:'
+    - '&8 • &f/{label} set name <name> &7- Rename team'
+    - '&8 • &f/{label} set tag <tag> &7- Set team tag'
+    - '&8 • &f/{label} set notice <text> &7- Set team notice'
+    - '&8 • &f/{label} set public <on|off> &7- Toggle public status'
+    - '&8 • &f/{label} set password <password|off> &7- Set or clear password'
+    - '&8 • &f/{label} set cost <amount|off> &7- Set or clear join fee'
+
+  name:
+    success: '{prefix}&aTeam name changed to &f{name}&a.'
+    broadcast: '{prefix}&7Team name was changed to &f{name} &7by &f{player}&7.'
+
+  tag:
+    disabled: '{prefix}&cTeam tag feature is not enabled on this server.'
+    success: '{prefix}&aTeam tag set to &f{tag}&a.'
+    too-short: '{prefix}&cTag must be at least &f{min} &ccharacters.'
+    too-long: '{prefix}&cTag can be at most &f{max} &ccharacters.'
+    invalid: '{prefix}&cTag contains invalid characters.'
+
+  notice:
+    disabled: '{prefix}&cTeam notice feature is not enabled on this server.'
+    success: '{prefix}&aTeam notice updated.'
+    cleared: '{prefix}&aTeam notice cleared.'
+    too-long: '{prefix}&cNotice can be at most &f{max} &ccharacters.'
+    broadcast: '{prefix}&eTeam notice: &f{notice}'
+    on-join: '{prefix}&eTeam notice: &f{notice}'
+
+  public:
+    enabled: '{prefix}&aTeam is now public, others can join via &f/{label} join {team}&a.'
+    disabled: '{prefix}&aTeam is now private.'
+    method-disabled: '{prefix}&cPublic team feature is not enabled on this server.'
+
+  password:
+    set: '{prefix}&aTeam password set to &f{password}&a.'
+    cleared: '{prefix}&aTeam password cleared.'
+    too-short: '{prefix}&cPassword must be at least &f{min} &ccharacters.'
+    too-long: '{prefix}&cPassword can be at most &f{max} &ccharacters.'
+    method-disabled: '{prefix}&cPassword join feature is not enabled on this server.'
+
+  cost:
+    method-disabled: '{prefix}&cEconomy join feature is not enabled on this server.'
+    invalid: '{prefix}&cInvalid amount: &f{input}&c. Please enter a non-negative number.'
+    too-high: '{prefix}&cJoin fee cannot exceed &f{max}&c.'
+    success: '{prefix}&aTeam join fee set to &f{cost}&a.'
+    cleared: '{prefix}&aTeam join fee cleared.'
+    broadcast: '{prefix}&7&f{player} &7set the team join fee to &f{cost}&7.'
+
+# ============================================================================
+#  Team Info Display
+# ============================================================================
+info:
+  header: '&8&m---------&r &bTeam Info &8&m---------'
+  footer: '&8&m------------------------------'
+  name: '&7Name: &f{name}'
+  tag: '&7Tag: &f{tag}'
+  leader: '&7Leader: &f{leader}'
+  size: '&7Members: &f{size}&7/&f{max} &8(Online {online})'
+  created: '&7Created: &f{created}'
+  public: '&7Public: {public}'
+  locked: '&7Password: {locked}'
+  cost: '&7Join Fee: &f{cost}'
+  notice: '&7Notice: &f{notice}'
+  members-header: '&7Members:'
+  member-entry: '&8 • {role} &f{player} {status}'
+  status-online: '&a[Online]'
+  status-offline: '&8[Offline]'
+
+list:
+  header: '&8&m-------&r &bTeam List &7(Page {page}/{max_page}) &8&m-------'
+  entry: '&8 • &f{name} &7- Leader &f{leader} &7- &f{size}&7/&f{max} &8(Online {online}) {public}'
+  footer: '&7Type &f/{label} list <page> &7for more'
+  empty: '{prefix}&7There are no teams on this server.'
+  invalid-page: '{prefix}&cPage out of range, total &f{max_page} &cpages.'
+
+# ============================================================================
+#  Admin Commands
+# ============================================================================
+admin:
+  usage:
+    - '&8&m---------&r &cTeam Admin &8&m---------'
+    - '&8 • &f/{label} reload &7- Reload configuration'
+    - '&8 • &f/{label} info <team|player> &7- View any team details'
+    - '&8 • &f/{label} disband <team> &7- Force disband a team'
+    - '&8 • &f/{label} kick <player> &7- Force kick a player'
+    - '&8 • &f/{label} transfer <team> <player> &7- Force transfer leadership'
+    - '&8 • &f/{label} storage &7- View storage backend status'
+    - '&8 • &f/{label} migrate <from> <to> [overwrite] &7- Migrate data between storages'
+    - '&8 • &f/{label} sync &7- Sync primary storage to secondary storages'
+    - '&8 • &f/{label} save &7- Save all in-memory teams immediately'
+    - '&8&m------------------------------'
+
+  storage:
+    header: '&8&m--------&r &bStorage Status &8&m--------'
+    primary: '&7Primary: &a{type} &8({detail})'
+    secondary: '&7Secondary: &e{type}'
+    none-secondary: '&7Secondary: &8None'
+    loaded-teams: '&7Teams in memory: &f{loaded} &7/ Total &f{total}'
+    mirror: '&7Mirror write: {enabled} &8(async: {async})'
+
+  migrate:
+    usage: '{prefix}&cUsage: &f/{label} migrate <yaml|sqlite|mysql> <yaml|sqlite|mysql> [overwrite]'
+    same-type: '{prefix}&cSource and target cannot be the same storage backend.'
+    not-enabled: '{prefix}&cStorage backend &f{type} &cis not enabled, please enable it in config.yml first.'
+    unknown-type: '{prefix}&cUnknown storage type &f{type}&c, available: yaml / sqlite / mysql'
+    started: '{prefix}&eStarting migration from &f{from} &eto &f{to}&e, please wait...'
+    warn-overwrite: '{prefix}&cWarning: This will erase existing data in &f{to}&c! Append &f overwrite &cto confirm.'
+    success: '{prefix}&aMigration complete: &f{count} &ateams migrated from &f{from} &ato &f{to}&a in &f{ms}ms&a.'
+    failed: '{prefix}&cMigration failed: &f{error}'
+
+  sync:
+    started: '{prefix}&eSyncing primary storage data to all secondary storages...'
+    success: '{prefix}&aSync complete: &f{count} &ateams written to &f{targets} &asecondary storages in &f{ms}ms&a.'
+    no-secondary: '{prefix}&cNo secondary storages are currently enabled.'
+    failed: '{prefix}&cSync failed: &f{error}'
+
+  save:
+    success: '{prefix}&aSaved &f{count} &ateams from memory.'
+
+  force:
+    disband-success: '{prefix}&aForcefully disbanded team &f{team}&a.'
+    kick-success: '{prefix}&aRemoved &f{player} &afrom team &f{team}&a.'
+    transfer-success: '{prefix}&aTransferred leadership of team &f{team} &ato &f{player}&a.'
+
+# ============================================================================
+#  Team Channel Chat (/team chat)
+# ============================================================================
+chat:
+  usage: '{prefix}&cUsage: &f/{label} chat [on|off|toggle]'
+  enabled: '{prefix}&aTeam channel enabled, your messages will only be visible to &f{team} &amembers.'
+  disabled: '{prefix}&aTeam channel disabled, back to public chat.'
+  disabled-feature: '{prefix}&cTeam channel feature is not enabled on this server.'
+
+# ============================================================================
+#  Help
+# ============================================================================
+help:
+  player:
+    - '&8&m---------&r &bTeam Commands &8&m---------'
+    - '&8 • &f/{label} create <name> &7- Create a team'
+    - '&8 • &f/{label} disband &7- Disband your team'
+    - '&8 • &f/{label} invite <player> &7- Invite a player'
+    - '&8 • &f/{label} accept [team] &7- Accept an invite'
+    - '&8 • &f/{label} deny [team] &7- Decline an invite'
+    - '&8 • &f/{label} join <team> [password] &7- Join a team'
+    - '&8 • &f/{label} leave &7- Leave your team'
+    - '&8 • &f/{label} chat [on|off] &7- Team channel chat'
+    - '&8 • &f/{label} kick <player> &7- Kick a member'
+    - '&8 • &f/{label} transfer <player> &7- Transfer leadership'
+    - '&8 • &f/{label} promote <player> &7- Promote to co-leader'
+    - '&8 • &f/{label} demote <player> &7- Demote to member'
+    - '&8 • &f/{label} info [team] &7- View team info'
+    - '&8 • &f/{label} list [page] &7- View team list'
+    - '&8 • &f/{label} set &7- Team settings'
+    - '&8&m------------------------------'

@@ -156,6 +156,11 @@ join:
     incorrect: '{prefix}&c口令错误。&7(剩余尝试次数: {remaining})'
     locked: '{prefix}&c尝试次数过多，请在 &f{seconds} &c秒后重试。'
 
+  # ---------- 经济消耗加入 ----------
+  economy:
+    insufficient: '{prefix}&c加入队伍 &f{team} &c需要 &f{cost} &c，但你的余额仅为 &f{balance}&c。'
+    charge-failed: '{prefix}&c入队费用 &f{cost} &c扣除失败，请联系管理员。'
+
 # ============================================================================
 #  队伍设置 (/team set ...)
 # ============================================================================
@@ -167,6 +172,7 @@ settings:
     - '&8 • &f/{label} set notice <公告> &7- 修改队伍公告'
     - '&8 • &f/{label} set public <on|off> &7- 切换公开状态'
     - '&8 • &f/{label} set password <口令|off> &7- 设置或清除口令'
+    - '&8 • &f/{label} set cost <金额|off> &7- 设置或清除入队费用'
 
   name:
     success: '{prefix}&a队伍名称已修改为 &f{name}&a。'
@@ -199,6 +205,14 @@ settings:
     too-long: '{prefix}&c口令最多 &f{max} &c个字符。'
     method-disabled: '{prefix}&c本服未开启口令入队功能。'
 
+  cost:
+    method-disabled: '{prefix}&c本服未开启经济消耗入队功能。'
+    invalid: '{prefix}&c无效的金额: &f{input}&c。请输入非负数字。'
+    too-high: '{prefix}&c入队费用不能超过 &f{max}&c。'
+    success: '{prefix}&a队伍入队费用已设置为 &f{cost}&a。'
+    cleared: '{prefix}&a队伍入队费用已清除。'
+    broadcast: '{prefix}&7&f{player} &7将队伍入队费用设置为 &f{cost}&7。'
+
 # ============================================================================
 #  队伍信息展示
 # ============================================================================
@@ -212,6 +226,7 @@ info:
   created: '&7创建: &f{created}'
   public: '&7公开: {public}'
   locked: '&7口令: {locked}'
+  cost: '&7入队费用: &f{cost}'
   notice: '&7公告: &f{notice}'
   members-header: '&7成员:'
   member-entry: '&8 • {role} &f{player} {status}'
