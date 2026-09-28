@@ -149,6 +149,24 @@
         </dependency>
 
         <!--
+            SOYSHTTPOverMC（软依赖，运行时由服务器提供）。
+            提供注解式 Web API、网页托管与门户能力：ERP 管理后台与 TIM 风格用户端。
+            缺失时网页管理功能自动停用，不影响游戏内队伍功能。
+        -->
+        <dependency>
+            <groupId>com.github.cocosoys.mc</groupId>
+            <artifactId>soyshttpovermc-core</artifactId>
+            <version>1.4.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.github.cocosoys.mc</groupId>
+            <artifactId>soyshttpovermc-common</artifactId>
+            <version>1.4.0</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!--
             JDBC 驱动说明：
             Spigot 1.12.2 服务端 jar 已内置 MySQL Connector/J 与 SQLite JDBC，
             因此这里统一使用 provided，不打包进插件，避免 jar 体积膨胀与驱动冲突。

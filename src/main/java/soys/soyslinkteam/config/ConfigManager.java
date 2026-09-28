@@ -27,6 +27,8 @@ public class ConfigManager {
     private FileConfiguration config;
     /** 队伍规则/入队方式/权限体系（teams.yml） */
     private FileConfiguration rulesConfig;
+    /** 队伍增幅配置（buff.yml） */
+    private FileConfiguration buffConfig;
 
     public ConfigManager(SOYSLinkTeam plugin) {
         this.plugin = plugin;
@@ -48,6 +50,30 @@ public class ConfigManager {
         FileConfiguration rulesDefaults = loadRulesDefaults();
         if (rulesDefaults != null) {
             rulesConfig.setDefaults(rulesDefaults);
+        }
+
+        // ---- buff.yml ----
+        File buffFile = new File(plugin.getDataFolder(), "buff.yml");
+        if (!buffFile.exists()) {
+            plugin.saveResource("buff.yml", false);
+        }
+        this.buffConfig = YamlConfiguration.loadConfiguration(buffFile);
+        FileConfiguration buffDefaults = loadBuffDefaults();
+        if (buffDefaults != null) {
+            buffConfig.setDefaults(buffDefaults);
+        }
+    }
+
+    /** 从 jar 内资源读取 buff.yml 默认值。 */
+    private FileConfiguration loadBuffDefaults() {
+        try (InputStream stream = plugin.getResource("buff.yml")) {
+            if (stream == null) {
+                return null;
+            }
+            return YamlConfiguration.loadConfiguration(
+                    new InputStreamReader(stream, StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            return null;
         }
     }
 
@@ -71,6 +97,36 @@ public class ConfigManager {
     /** teams.yml 的原始配置对象（队伍规则/入队方式/权限体系）。 */
     public FileConfiguration rawRules() {
         return rulesConfig;
+    }
+
+    /** buff.yml 的原始配置对象（队伍增幅 / 属性映射）。 */
+    public FileConfiguration rawBuff() {
+        return buffConfig;
+    }
+
+    /** 获取增幅配置根节（buff.yml），未加载时返回 null。 */
+    public ConfigurationSection getBuffSection() {
+        return buffConfig;
+    }
+
+    /** 增幅默认持续秒数。 */
+    public int getBuffDefaultDuration() {
+        return buffConfig == null ? 60 : buffConfig.getInt("default-duration-seconds", 60);
+    }
+
+    /** 增幅最大持续秒数，0 表示不限制。 */
+    public int getBuffMaxDuration() {
+        return buffConfig == null ? 0 : buffConfig.getInt("max-duration-seconds", 0);
+    }
+
+    /** 申请有效期秒数。 */
+    public int getApplicationExpireSeconds() {
+        return buffConfig == null ? 86400 : buffConfig.getInt("application-expire-seconds", 86400);
+    }
+
+    /** Web 日志缓冲容量。 */
+    public int getWebLogCapacity() {
+        return buffConfig == null ? 1000 : buffConfig.getInt("web-log-capacity", 1000);
     }
 
     // ================================================================

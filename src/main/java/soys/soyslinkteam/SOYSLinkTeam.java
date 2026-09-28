@@ -11,6 +11,9 @@ import soys.soyslinkteam.join.InviteManager;
 import soys.soyslinkteam.join.JoinMethodRegistry;
 import soys.soyslinkteam.chat.ChatListener;
 import soys.soyslinkteam.chat.TeamChannelManager;
+import soys.soyslinkteam.application.ApplicationManager;
+import soys.soyslinkteam.buff.TeamBuffManager;
+import soys.soyslinkteam.web.WebIntegration;
 import soys.soyslinkteam.nametag.NametagManager;
 import soys.soyslinkteam.permission.PermissionManager;
 import soys.soyslinkteam.storage.StorageManager;
@@ -40,6 +43,9 @@ public final class SOYSLinkTeam extends JavaPlugin {
     private PlaceholderHook placeholderHook;
     private TeamChannelManager teamChannelManager;
     private NametagManager nametagManager;
+    private TeamBuffManager teamBuffManager;
+    private ApplicationManager applicationManager;
+    private WebIntegration webIntegration;
     private soys.soyslinkteam.luckperms.LuckPermsContextHook luckPermsContextHook;
 
     public static SOYSLinkTeam getInstance() {
@@ -82,6 +88,17 @@ public final class SOYSLinkTeam extends JavaPlugin {
             luckPermsContextHook = new soys.soyslinkteam.luckperms.LuckPermsContextHook(this);
             luckPermsContextHook.initialize();
 
+            // 队伍增幅（药水 / 属性）与入队申请
+            teamBuffManager = new TeamBuffManager(this);
+            teamBuffManager.initialize();
+
+            applicationManager = new ApplicationManager(this);
+            applicationManager.start();
+
+            // 网页管理（ERP 后台 / TIM 用户端），需在全部核心管理器就绪后挂载
+            webIntegration = new WebIntegration(this);
+            webIntegration.hook();
+
             getLogger().info("SOYSLinkTeam 已启用，共加载 "
                     + teamManager.getTotalCount() + " 支队伍。");
         } catch (Exception e) {
@@ -91,6 +108,15 @@ public final class SOYSLinkTeam extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (webIntegration != null) {
+            webIntegration.shutdown();
+        }
+        if (applicationManager != null) {
+            applicationManager.stop();
+        }
+        if (teamBuffManager != null) {
+            teamBuffManager.shutdown();
+        }
         if (nametagManager != null) {
             nametagManager.shutdown();
         }
@@ -135,6 +161,7 @@ public final class SOYSLinkTeam extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
         getServer().getPluginManager().registerEvents(new ChatListener(this), this);
         getServer().getPluginManager().registerEvents(nametagManager, this);
+        // teamBuffManager 的监听器在其 initialize() 中自行注册，此处不重复登记。
     }
 
     private void registerPlaceholders() {
@@ -209,6 +236,18 @@ public final class SOYSLinkTeam extends JavaPlugin {
 
     public NametagManager getNametagManager() {
         return nametagManager;
+    }
+
+    public TeamBuffManager getTeamBuffManager() {
+        return teamBuffManager;
+    }
+
+    public ApplicationManager getApplicationManager() {
+        return applicationManager;
+    }
+
+    public WebIntegration getWebIntegration() {
+        return webIntegration;
     }
 
     public soys.soyslinkteam.luckperms.LuckPermsContextHook getLuckPermsContextHook() {

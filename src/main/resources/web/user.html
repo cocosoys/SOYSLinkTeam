@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SOYSLinkTeam · 队伍助手</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --panel: #f4f5f7;
+    --border: #e5e6eb;
+    --green: #95ec69;
+    --blue: #12b7f5;
+    --blue2: #d4ecff;
+    --text: #1f2329;
+    --text2: #646a73;
+    --text3: #8f959e;
+    --hover: #ebedf0;
+    --active: #e3eefc;
+  }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                 "Microsoft YaHei", Arial, sans-serif;
+    color: var(--text); font-size: 14px; overflow: hidden; background: #eef0f3;
+  }
+  .app { display: flex; height: 100vh; }
+
+  /* ===== 左栏 ===== */
+  .side { width: 270px; background: var(--panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
+  .me-bar { padding: 14px 16px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); }
+  .me-bar .av { width: 40px; height: 40px; border-radius: 50%; background: var(--blue); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 600; flex-shrink: 0; }
+  .me-bar .info { flex: 1; min-width: 0; }
+  .me-bar .nm { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .me-bar .st { font-size: 12px; color: var(--text3); margin-top: 2px; }
+  .search { padding: 10px 12px; }
+  .search input { width: 100%; height: 32px; border: none; background: #e9eaed; border-radius: 6px; padding: 0 12px; outline: none; font-size: 13px; }
+  .chat-list { flex: 1; overflow-y: auto; padding: 4px 8px; }
+  .chat-item { display: flex; align-items: center; gap: 11px; padding: 10px 10px; border-radius: 8px; cursor: pointer; margin-bottom: 2px; }
+  .chat-item:hover { background: var(--hover); }
+  .chat-item.active { background: var(--active); }
+  .chat-item .cav { width: 42px; height: 42px; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #fff; }
+  .cav.bot { background: linear-gradient(135deg,#36cffc,#12a8f5); }
+  .cav.team { background: linear-gradient(135deg,#ffc06a,#ff9a3d); }
+  .chat-item .ci { flex: 1; min-width: 0; }
+  .chat-item .cn { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chat-item .cm { font-size: 12px; color: var(--text3); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .side-foot { padding: 10px 16px; border-top: 1px solid var(--border); }
+  .btn-discover { width: 100%; height: 36px; border: 1px solid var(--blue); color: var(--blue); background: #fff; border-radius: 8px; cursor: pointer; font-size: 14px; }
+  .btn-discover:hover { background: #eaf8ff; }
+
+  /* ===== 右侧聊天区 ===== */
+  .chat { flex: 1; display: flex; flex-direction: column; background: #f5f6f7; min-width: 0; }
+  .chat-head { height: 60px; background: #fff; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; flex-shrink: 0; }
+  .chat-head .t { font-size: 16px; font-weight: 600; flex: 1; }
+  .chat-head .meta { color: var(--text3); font-size: 13px; }
+  .chat-head .hbtn { border: none; background: none; color: var(--text2); font-size: 20px; cursor: pointer; margin-left: 14px; }
+
+  .stream { flex: 1; overflow-y: auto; padding: 22px 18px; }
+  .msg-row { display: flex; margin-bottom: 18px; align-items: flex-start; gap: 9px; }
+  .msg-row.me { flex-direction: row-reverse; }
+  .msg-av { width: 36px; height: 36px; border-radius: 6px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 15px; font-weight: 600; }
+  .msg-av.bot { background: linear-gradient(135deg,#36cffc,#12a8f5); }
+  .msg-av.player { background: var(--blue); }
+  .bubble { max-width: 62%; padding: 9px 13px; border-radius: 8px; background: #fff; box-shadow: 0 1px 1px rgba(0,0,0,.05); line-height: 1.55; word-break: break-word; white-space: pre-wrap; }
+  .msg-row.me .bubble { background: var(--green); }
+  .bubble .sender { font-size: 12px; color: var(--text3); margin-bottom: 3px; }
+  .sys-line { text-align: center; margin: 14px 0; }
+  .sys-line span { display: inline-block; background: rgba(0,0,0,.12); color: #fff; font-size: 12px; padding: 3px 12px; border-radius: 10px; }
+
+  /* 卡片消息 */
+  .card-wrap { width: 100%; display: flex; justify-content: center; margin-bottom: 18px; }
+  .card { width: 78%; max-width: 520px; background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,.08); overflow: hidden; }
+  .card-head { padding: 13px 16px; background: linear-gradient(135deg,#eaf8ff,#f4faff); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 9px; }
+  .card-head .ico { width: 34px; height: 34px; border-radius: 8px; background: var(--blue); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 17px; }
+  .card-head .tt { font-weight: 600; font-size: 15px; }
+  .card-head .ss { font-size: 12px; color: var(--text3); margin-top: 2px; }
+  .card-body { padding: 14px 16px; }
+  .card-foot { padding: 11px 16px; border-top: 1px solid var(--border); display: flex; gap: 8px; flex-wrap: wrap; }
+  .kvline { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13.5px; }
+  .kvline .k { color: var(--text2); } .kvline .v { font-weight: 500; text-align: right; max-width: 60%; }
+  .tag { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 12px; line-height: 18px; margin-right: 4px; }
+  .tag.g { background: #e8fbe0; color: #2ea121; } .tag.b { background: #e3f2ff; color: #0e87d8; }
+  .tag.o { background: #fff3e0; color: #e08600; } .tag.gray { background: #f0f1f3; color: var(--text2); }
+  .tag.r { background: #ffeceb; color: #e54545; }
+  .mini-member { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 13.5px; }
+  .dot-on { width: 7px; height: 7px; border-radius: 50%; background: #34c759; } .dot-off { width: 7px; height: 7px; border-radius: 50%; background: #d1d3d8; }
+
+  .cbtn { height: 32px; padding: 0 14px; border-radius: 7px; border: 1px solid var(--border); background: #fff; color: var(--text); cursor: string; font-size: 13.5px; }
+  .cbtn:hover { border-color: var(--blue); color: var(--blue); }
+  .cbtn.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .cbtn.primary:hover { background: #0aa3e0; color: #fff; }
+  .cbtn.green { background: #2bb673; border-color: #2bb673; color: #fff; }
+  .cbtn.green:hover { opacity: .92; color: #fff; }
+  .cbtn.danger { background: #f05a50; border-color: #f05a50; color: #fff; }
+  .cbtn.danger:hover { opacity: .92; color: #fff; }
+  .cbtn.block { width: 100%; }
+  .card input[type=text], .card input[type=password] { width: 100%; height: 34px; border: 1px solid var(--border); border-radius: 7px; padding: 0 11px; outline: none; font-size: 14px; margin: 6px 0; }
+  .card input:focus { border-color: var(--blue); }
+  .hint { font-size: 12px; color: var(--text3); margin-top: 6px; line-height: 1.5; }
+
+  /* 输入区 */
+  .input-zone { background: #fff; border-top: 1px solid var(--border); padding: 10px 16px 14px; flex-shrink: 0; }
+  .quick { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+  .quick button { border: none; background: #f0f1f3; color: var(--text2); font-size: 12.5px; padding: 4px 11px; border-radius: 12px; cursor: string; }
+  .quick button:hover { background: #e3eefc; color: var(--blue); }
+  .input-row { display: flex; gap: 10px; align-items: flex-end; }
+  .input-row textarea { flex: 1; border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; resize: none; height: 42px; max-height: 110px; outline: none; font-family: inherit; font-size: 14px; line-height: 1.5; }
+  .input-row textarea:focus { border-color: var(--blue); }
+  .send { width: 44px; height: 42px; border-radius: 8px; border: none; background: var(--blue); color: #fff; font-size: 18px; cursor: pointer; flex-shrink: 0; }
+  .send:disabled { background: #c8c9cc; cursor: not-allowed; }
+
+  #toast { position: fixed; top: 18px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,.78); color: #fff; padding: 9px 18px; border-radius: 8px; font-size: 14px; z-index: 99; display: none; }
+  .empty { text-align: center; color: var(--text3); padding: 30px 0; }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- 左栏 -->
+  <aside class="side">
+    <div class="me-bar">
+      <span class="av" id="myAv">?</span>
+      <div class="info"><div class="nm" id="myName">加载中…</div>
+        <div class="st" id="myStatus">正在连接…</div></div>
+    </div>
+    <div class="search"><input type="text" id="searchInput" placeholder="搜索队伍名称"
+      onkeydown="if(event.key==='Enter') A.search(this.value)"></div>
+    <div class="chat-list" id="chatList"></div>
+    <div class="side-foot"><button class="btn-discover" onclick="A.browse()">＋ 发现队伍</button></div>
+  </aside>
+
+  <!-- 右侧 -->
+  <section class="chat">
+    <div class="chat-head">
+      <span class="t" id="chatTitle">队伍助手</span>
+      <span class="meta" id="chatMeta"></span>
+    </div>
+    <div class="stream" id="stream"></div>
+    <div class="input-zone">
+      <div class="quick" id="quickBar"></div>
+      <div class="input-row">
+        <textarea id="input" placeholder="输入消息，Enter 发送，Shift+Enter 换行"></textarea>
+        <button class="send" id="sendBtn" onclick="onSend()">➤</button>
+      </div>
+    </div>
+  </section>
+</div>
+<div id="toast"></div>
+
+<script>
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+let toastTimer;
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.style.display='block';
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.style.display='none',2600); }
+
+async function api(path,options){
+  options=options||{}; options.credentials='same-origin';
+  options.headers=Object.assign({'Content-Type':'application/json'},options.headers||{});
+  let res; try{ res=await fetch(path,options); }catch(e){ throw new Error('网络错误'); }
+  if(res.status===401||res.status===403){ toast('登录已失效，请重新登录'); throw new Error('auth'); }
+  return await res.json();
+}
+async function getData(p){ const r=await api(p); if(r.code!==200) throw new Error(r.msg||'请求失败'); return r.data; }
+async function post(p,o){ return await api(p,{method:'POST',body:JSON.stringify(o||{})}); }
+
+/* ===== 会话状态 ===== */
+let me=null;
+const chats={ assistant:{type:'assistant',title:'队伍助手',meta:'官方助手',messages:[]} };
+let active='assistant';
+
+/* ===== 消息添加 ===== */
+function addMsg(chatId,m){
+  chats[chatId].messages.push(m);
+  if(chatId===active) renderOne(m,true);
+}
+function renderOne(m,scroll){
+  const s=$('stream');
+  let html='';
+  if(m.system){ html=`<div class="sys-line"><span>${esc(m.system)}</span></div>`; }
+  else if(m.card){ html=`<div class="card-wrap"><div class="card">${m.card}</div></div>`; }
+  else {
+    const mine=m.role==='me';
+    const av = mine
+      ? `<div class="msg-av player">${esc((me&&me.name||'?').charAt(0).toUpperCase())}</div>`
+      : `<div class="msg-av bot">助</div>`;
+    html=`<div class="msg-row ${mine?'me':''}">${av}
+      <div class="bubble">${!mine&&m.sender?`<div class="sender">${esc(m.sender)}</div>`:''}${esc(m.text)}</div></div>`;
+  }
+  s.insertAdjacentHTML('beforeend',html);
+  if(scroll) s.scrollTop=s.scrollHeight;
+}
+function renderChat(id){
+  active=id;
+  document.querySelectorAll('.chat-item').forEach(x=>x.classList.toggle('active',x.dataset.id===id));
+  const c=chats[id];
+  $('chatTitle').textContent=c.title; $('chatMeta').textContent=c.meta||'';
+  $('stream').innerHTML='';
+  c.messages.forEach(m=>renderOne(m,false));
+  $('stream').scrollTop=$('stream').scrollHeight;
+  renderQuick();
+}
+function renderQuick(){
+  let btns;
+  if(active==='assistant'){
+    btns=[['发现队伍','A.browse()'],['我的队伍','A.myTeam()'],['帮助','A.help()']];
+    if(me&&me.hasTeam) btns.splice(1,0,['队伍聊天','A.gotoTeam()']);
+  } else {
+    btns=[['队伍详情','A.myTeam()'],['离开队伍','A.leave()']];
+  }
+  $('quickBar').innerHTML=btns.map(b=>`<button onclick="${b[1]}">${b[0]}</button>`).join('');
+}
+
+/* ===== 会话列表 ===== */
+function renderChatList(){
+  let items=[`<div class="chat-item ${active==='assistant'?'active':''}" data-id="assistant" onclick="renderChat('assistant')">
+    <span class="cav bot">🤖</span>
+    <div class="ci"><div class="cn">队伍助手</div>
+      <div class="cm">浏览 / 加入 / 管理队伍</div></div></div>`];
+  if(me&&me.hasTeam){
+    const id='team:'+me.teamId;
+    items.push(`<div class="chat-item ${active===id?'active':''}" data-id="${id}" onclick="A.gotoTeam()">
+      <span class="cav team">👥</span>
+      <div class="ci"><div class="cn">${esc(me.teamName)}</div>
+        <div class="cm">队伍频道聊天</div></div></div>`);
+  }
+  $('chatList').innerHTML=items.join('');
+}
+
+/* ===== 输入发送 ===== */
+function onSend(){
+  const ta=$('input'); const text=ta.value.trim(); if(!text) return;
+  ta.value='';
+  if(active==='assistant'){
+    addMsg('assistant',{role:'me',text});
+    handleCommand(text);
+  } else {
+    sendTeamChat(text);
+  }
+}
+$('input').addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); onSend(); }
+});
+
+async function sendTeamChat(text){
+  addMsg(active,{role:'me',text});
+  try{
+    const r=await post('/api/user/chat',{message:text});
+    if(r.code!==200) addMsg(active,{system:r.msg||'发送失败'});
+  }catch(e){ addMsg(active,{system:'发送失败：网络错误'}); }
+}
+
+/* ===== 助手命令解析 ===== */
+function handleCommand(text){
+  const t=text.trim();
+  if(/^(帮助|help|菜单|\?|？)$/i.test(t)) return A.help();
+  if(/^(大厅|列表|队伍列表|浏览|list|browse)$/i.test(t)) return A.browse();
+  if(/^(我的队伍|我的|队伍信息|myteam)$/i.test(t)) return A.myTeam();
+  if(/^(离开|退出|退队|leave)$/i.test(t)) return A.leave();
+  let m;
+  if((m=t.match(/^(?:加入|join)\s+(.+)$/i))) return A.joinByName(m[1]);
+  if((m=t.match(/^(?:申请|apply)\s+(.+)$/i))) return A.applyByName(m[1]);
+  if((m=t.match(/^(?:查看|view|info)\s+(.+)$/i))) return A.viewByName(m[1]);
+  addMsg('assistant',{role:'them',text:'抱歉，我没理解这条指令。点击下方“帮助”查看我能做的事情，或点击“发现队伍”浏览可加入的队伍。'});
+}
+
+/* ===== 助手动作集合 ===== */
+const A={
+  help(){
+    addMsg('assistant',{card:`
+      <div class="card-head"><span class="ico">📖</span><div><div class="tt">使用帮助</div>
+        <div class="ss">你可以点击按钮，或直接输入指令</div></div></div>
+      <div class="card-body">
+        <div class="kvline"><span class="k">发现 / 浏览队伍</span><span class="v">输入“大厅”</span></div>
+        <div class="kvline"><span class="k">查看队伍详情</span><span class="v">查看 &lt;队伍名&gt;</span></div>
+        <div class="kvline"><span class="k">加入公开队伍</span><span class="v">加入 &lt;队伍名&gt;</span></div>
+        <div class="kvline"><span class="k">申请加入私有队伍</span><span class="v">申请 &lt;队伍名&gt;</span></div>
+        <div class="kvline"><span class="k">查看我的队伍</span><span class="v">输入“我的队伍”</span></div>
+        <div class="kvline"><span class="k">离开当前队伍</span><span class="v">输入“离开”</span></div>
+        <div class="hint">队长 / 副队长还可在“我的队伍”中审批入队申请。高级管理请使用 ERP 后台：<a href="/team-admin" target="_blank">/team-admin</a></div>
+      </div>`});
+  },
+
+  async browse(keyword){
+    addMsg('assistant',{system:'正在获取队伍列表…'});
+    try{
+      const d=await getData('/api/user/browse?keyword='+encodeURIComponent(keyword||''));
+      if(!d.list.length){ addMsg('assistant',{role:'them',text:'当前没有找到队伍。'}); return; }
+      const cards=d.list.map(t=>{
+        const way=t.open?(t.hasCost?`<span class="tag o">付费 ${t.cost}</span>`:'<span class="tag g">无条件加入</span>')
+          :(t.hasPassword?'<span class="tag b">口令加入</span>':'<span class="tag gray">申请/邀请</span>');
+        const size=t.size<0?'—':`${t.size}/${t.maxSize}`;
+        return `<div class="mini-member">
+          <span class="${t.onlineCount>0?'dot-on':'dot-off'}"></span>
+          <span style="flex:1;font-weight:600;">${esc(t.name)}</span>
+          ${way}<span class="tag gray">${size}人</span>
+          <button class="cbtn" onclick="A.view('${t.id}')">查看</button></div>`;
+      }).join('');
+      addMsg('assistant',{card:`
+        <div class="card-head"><span class="ico">🏟️</span><div><div class="tt">队伍大厅</div>
+          <div class="ss">共 ${d.total} 支队伍</div></div></div>
+        <div class="card-body">${cards}</div>`});
+    }catch(e){ addMsg('assistant',{role:'them',text:'获取队伍列表失败：'+e.message}); }
+  },
+
+  search(v){ if(v) A.browse(v); },
+
+  async view(id){
+    try{
+      const t=await getData('/api/user/team-profile?id='+id);
+      const memberList=t.members.map(m=>{
+        const role=m.role==='LEADER'?'<span class="tag o">队长</span>':m.role==='ADMIN'?'<span class="tag b">副队</span>':'';
+        return `<div class="mini-member"><span class="${m.online?'dot-on':'dot-off'}"></span>
+          <span style="flex:1;">${esc(m.name)}</span>${role}</div>`;
+      }).join('');
+      const buffList=t.buffs.length? t.buffs.map(b=>`<span class="tag o">${esc(b.displayName)} ${b.levelDisplay} · ${esc(b.remainingText)}</span>`).join(''):'<span class="hint">暂无</span>';
+      const way=t.open?(t.hasCost?`<span class="tag o">付费 ${t.cost}</span>`:'<span class="tag g">无条件加入</span>')
+        :(t.hasPassword?'<span class="tag b">口令加入</span>':'<span class="tag gray">需申请/邀请</span>');
+      addMsg('assistant',{card:`
+        <div class="card-head"><span class="ico">🛡️</span><div><div class="tt">${esc(t.name)}</div>
+          <div class="ss">队长：${esc(t.leaderName)} · 创建于 ${esc(t.createdAtText)}</div></div></div>
+        <div class="card-body">
+          <div class="kvline"><span class="k">加入方式</span><span class="v">${way}</span></div>
+          <div class="kvline"><span class="k">人数</span><span class="v">${t.size}/${t.maxSize} · 在线 ${t.onlineCount}</span></div>
+          <div class="kvline"><span class="k">当前增幅</span><span class="v">${buffList}</span></div>
+          ${t.notice?`<div class="kvline"><span class="k">公告</span><span class="v">${esc(t.notice)}</span></div>`:''}
+          <div style="margin-top:10px;"><div class="hint">成员</div>${memberList}</div>
+        </div>
+        <div class="card-foot" id="tf-${t.id}"></div>`});
+      // 根据加入方式渲染操作
+      const foot=$('tf-'+t.id);
+      if(me&&me.hasTeam){ foot.innerHTML='<span class="hint">你已加入队伍，无法重复加入</span>'; }
+      else if(t.open && !t.hasPassword && !t.hasCost){
+        foot.innerHTML=`<button class="cbtn green" onclick="A.doJoin('${t.id}')">立即加入</button>`;
+      } else if(t.open && t.hasPassword){
+        foot.innerHTML=`<input type="password" id="pw-${t.id}" placeholder="请输入入队口令" style="flex:1;">
+          <button class="cbtn green" onclick="A.doJoin('${t.id}')">加入</button>`;
+      } else if(t.open && t.hasCost){
+        foot.innerHTML=`<span class="hint">加入将扣除 ${t.cost} 金币</span>
+          <button class="cbtn green" onclick="A.doJoin('${t.id}')">付费加入</button>`;
+      } else {
+        foot.innerHTML=`<input type="text" id="msg-${t.id}" placeholder="申请留言（可选）" style="flex:1;">
+          <button class="cbtn primary" onclick="A.doApply('${t.id}')">申请加入</button>`;
+      }
+    }catch(e){ addMsg('assistant',{role:'them',text:'查看失败：'+e.message}); }
+  },
+
+  async doJoin(id){
+    let password=''; const pw=$('pw-'+id); if(pw) password=pw.value;
+    addMsg('assistant',{system:'正在加入队伍…'});
+    try{
+      const r=await post('/api/user/join',{teamId:id,password});
+      if(r.code===200){ addMsg('assistant',{role:'them',text:r.msg||'加入成功'}); await refreshMe(); }
+      else addMsg('assistant',{role:'them',text:r.msg||'加入失败'});
+    }catch(e){ addMsg('assistant',{role:'them',text:'加入失败：'+e.message}); }
+  },
+
+  async doApply(id){
+    let message=''; const m=$('msg-'+id); if(m) message=m.value;
+    try{
+      const r=await post('/api/user/apply',{teamId:id,message});
+      if(r.code===200){ addMsg('assistant',{role:'them',text:'申请已提交，等待队长 / 副队长审批。'}); }
+      else addMsg('assistant',{role:'them',text:r.msg||'申请失败'});
+    }catch(e){ addMsg('assistant',{role:'them',text:'申请失败：'+e.message}); }
+  },
+
+  async myTeam(){
+    if(!me||!me.hasTeam){ addMsg('assistant',{role:'them',text:'你当前还没有加入任何队伍，点击“发现队伍”去看看吧。'}); return; }
+    try{
+      const t=await getData('/api/user/my-team');
+      const myRole=t.myRole;
+      const memberList=t.members.map(m=>{
+        const role=m.role==='LEADER'?'<span class="tag o">队长</span>':m.role==='ADMIN'?'<span class="tag b">副队</span>':'';
+        return `<div class="mini-member"><span class="${m.online?'dot-on':'dot-off'}"></span>
+          <span style="flex:1;">${esc(m.name)}</span>${role}</div>`;
+      }).join('');
+      const buffList=t.buffs.length?t.buffs.map(b=>`<span class="tag o">${esc(b.displayName)} ${b.levelDisplay} · ${esc(b.remainingText)}</span>`).join(''):'<span class="hint">暂无增幅</span>';
+      const canManage=myRole==='LEADER'||myRole==='ADMIN';
+      addMsg('assistant',{card:`
+        <div class="card-head"><span class="ico">👥</span><div><div class="tt">${esc(t.name)}</div>
+          <div class="ss">你的身份：${myRole==='LEADER'?'队长':myRole==='ADMIN'?'副队长':'成员'}</div></div></div>
+        <div class="card-body">
+          <div class="kvline"><span class="k">人数</span><span class="v">${t.size}/${t.maxSize} · 在线 ${t.onlineCount}</span></div>
+          <div class="kvline"><span class="k">当前增幅</span><span class="v">${buffList}</span></div>
+          ${t.settings.notice?`<div class="kvline"><span class="k">公告</span><span class="v">${esc(t.settings.notice)}</span></div>`:''}
+          <div style="margin-top:10px;"><div class="hint">成员</div>${memberList}</div>
+        </div>
+        <div class="card-foot">
+          <button class="cbtn primary" onclick="A.gotoTeam()">进入队伍聊天</button>
+          ${canManage?`<button class="cbtn" onclick="A.showApplications('${t.id}')">审批申请</button>`:''}
+          <button class="cbtn danger" onclick="A.leave()">离开队伍</button>
+        </div>`});
+    }catch(e){ addMsg('assistant',{role:'them',text:'获取队伍信息失败：'+e.message}); }
+  },
+
+  async showApplications(teamId){
+    try{
+      const list=await getData('/api/user/team-applications?teamId='+teamId);
+      if(!list.length){ addMsg('assistant',{role:'them',text:'当前没有待处理的入队申请。'}); return; }
+      const rows=list.map(a=>`<div class="mini-member">
+          <span class="${a.online?'dot-on':'dot-off'}"></span>
+          <span style="flex:1;"><b>${esc(a.applicantName)}</b>
+            <span class="hint">${a.message?esc(a.message):'无留言'} · 剩余 ${fmtRemain(a.remaining)}</span></span>
+          <button class="cbtn green" onclick="A.handle('${teamId}','${a.applicant}',true)">批准</button>
+          <button class="cbtn danger" onclick="A.handle('${teamId}','${a.applicant}',false)">拒绝</button>
+        </div>`).join('');
+      addMsg('assistant',{card:`
+        <div class="card-head"><span class="ico">📝</span><div><div class="tt">入队申请审批</div>
+          <div class="ss">${list.length} 条待处理</div></div></div>
+        <div class="card-body">${rows}</div>`});
+    }catch(e){ addMsg('assistant',{role:'them',text:'获取申请失败：'+e.message}); }
+  },
+
+  async handle(teamId,applicantId,approve){
+    let reason='';
+    if(!approve){ reason=prompt('拒绝理由（可留空）：')||''; }
+    const r=await post('/api/user/application/handle',{teamId,playerId:applicantId,approve,reason});
+    if(r.code===200){ addMsg('assistant',{system:r.msg||'操作成功'}); A.showApplications(teamId); }
+    else addMsg('assistant',{role:'them',text:r.msg||'操作失败'});
+  },
+
+  leave(){
+    addMsg('assistant',{card:`
+      <div class="card-head"><span class="ico">⚠️</span><div><div class="tt">确认离开队伍？</div></div></div>
+      <div class="card-body"><div class="hint">若你是队长，系统将按配置自动转让队长；若无其他成员，队伍将被解散。</div></div>
+      <div class="card-foot">
+        <button class="cbtn" onclick="closeCardHint()">取消</button>
+        <button class="cbtn danger" onclick="A.doLeave()">确认离开</button></div>`});
+  },
+  async doLeave(){
+    const r=await post('/api/user/leave',{});
+    if(r.code===200){ addMsg('assistant',{role:'them',text:r.msg||'已离开队伍'}); await refreshMe(); }
+    else addMsg('assistant',{role:'them',text:r.msg||'离开失败'});
+  },
+
+  gotoTeam(){
+    if(!me||!me.hasTeam){ toast('你还没有队伍'); return; }
+    const id='team:'+me.teamId;
+    if(!chats[id]){
+      chats[id]={type:'team',title:me.teamName,meta:'队伍频道',messages:[
+        {system:'已进入 '+me.teamName+' 队伍频道'},
+      ]};
+      if(me.notice) chats[id].messages.push({system:'公告：'+me.notice});
+    }
+    renderChatList(); renderChat(id);
+  },
+
+  async viewByName(name){
+    const id=await resolveName(name); if(id) A.view(id);
+    else addMsg('assistant',{role:'them',text:`找不到名为“${name}”的队伍。`});
+  },
+  async joinByName(name){
+    const id=await resolveName(name);
+    if(!id){ addMsg('assistant',{role:'them',text:`找不到名为“${name}”的队伍。`}); return; }
+    A.view(id);
+  },
+  async applyByName(name){
+    const id=await resolveName(name);
+    if(!id){ addMsg('assistant',{role:'them',text:`找不到名为“${name}”的队伍。`}); return; }
+    A.view(id);
+  }
+};
+
+function closeCardHint(){ addMsg('assistant',{system:'已取消'}); }
+function fmtRemain(s){ if(s<=0) return '已结束';
+  const d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60),sec=s%60;
+  if(d>0) return d+'天'+h+'小时'; if(h>0) return h+'小时'+m+'分';
+  if(m>0) return m+'分'+sec+'秒'; return sec+'秒'; }
+async function resolveName(name){
+  try{ const t=await getData('/api/user/team-profile?name='+encodeURIComponent(name.trim())); return t.id; }
+  catch(e){ return null; }
+}
+
+/* ===== 启动 ===== */
+async function refreshMe(){
+  const d=await getData('/api/user/me'); me=d;
+  $('myName').textContent=d.name;
+  $('myAv').textContent=(d.name||'?').charAt(0).toUpperCase();
+  $('myStatus').textContent=(d.online?'在线 · ':'离线 · ')+(d.hasTeam?d.teamName:'无队伍');
+  if(d.hasTeam){ me.teamName=d.teamName; me.teamId=d.teamId; }
+  renderChatList(); renderQuick();
+}
+(async function init(){
+  try{
+    await refreshMe();
+    renderChat('assistant');
+    addMsg('assistant',{role:'them',text:'你好，我是 SOYSLinkTeam 队伍助手。你可以让我帮你浏览队伍、申请 / 加入队伍，或管理你的队伍。点击“发现队伍”开始吧。'});
+    A.help();
+  }catch(e){
+    $('myStatus').textContent='连接失败';
+    addMsg('assistant',{role:'them',text:'无法连接到服务器，请确认已通过游戏内账号登录。'});
+    renderChat('assistant');
+  }
+})();
+</script>
+</body>
+</html>

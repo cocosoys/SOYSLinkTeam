@@ -1,0 +1,79 @@
+# ============================================================================
+#  SOYSLinkTeam 队伍增幅配置（buff.yml）
+# ----------------------------------------------------------------------------
+#  本文件配置两类内容：
+#    1. 增幅 / 申请 / 日志的全局默认值；
+#    2. “属性类增幅”的控制台命令映射 —— 用于适配各类属性插件。
+#
+#  药水类增幅（速度、力量、抗性等，类似信标效果）无需在此配置，
+#  管理后台 “队伍增幅” 中可直接选择全部 Bukkit 药水效果。
+# ============================================================================
+
+# 增幅默认持续时间（秒）。后台添加增幅时若未指定时长则使用此值。
+default-duration-seconds: 60
+
+# 增幅最大持续时间（秒）。0 表示不限制；>0 时后台无法授予超过该时长的增幅。
+max-duration-seconds: 0
+
+# 入队申请的有效期（秒）。超时未处理的申请自动失效。默认 86400 = 1 天。
+application-expire-seconds: 86400
+
+# 网页管理后台 “操作日志” 的内存缓冲条数（环形覆盖，最新在前）。
+web-log-capacity: 1000
+
+# ============================================================================
+#  属性类增幅 —— 控制台命令映射
+# ----------------------------------------------------------------------------
+#  SOYSLinkTeam 不硬依赖任何属性插件，而是通过 “给予命令 / 移除命令” 适配
+#  一切支持控制台指令的属性插件，包括但不限于：
+#    BigAttribute、AttributePlus、Attribute、SX-Attribute、ItemAttribute
+#
+#  为每个属性键配置：
+#    display-name  : 后台显示名称
+#    apply-command : 增幅生效（添加 / 玩家上线补发）时，控制台执行的命令
+#    remove-command: 增幅过期 / 被移除 / 玩家下线时，控制台执行的命令
+#
+#  命令模板可用占位符：
+#    %player%    玩家名
+#    %level%     增幅等级（amplifier + 1，即后台选择的 I/II/III...）
+#    %amplifier% 增幅倍率（0 基）
+#    %buffid%    增幅实例唯一 ID（可用于幂等处理）
+#
+#  注意：下列属性默认全部以注释形式给出模板。请按你服务器实际安装的属性插件
+#        与其指令格式，取消注释并修改命令后使用；命令填写错误会导致属性
+#        无法正确给予或移除。
+# ============================================================================
+attributes:
+
+  # ---- 示例：攻击力（请按实际属性插件修改）----
+  # attack_damage:
+  #   display-name: "攻击力"
+  #   # SX-Attribute 风格（示意，具体以插件 WIKI 为准）
+  #   apply-command: "sx attribute %player% add 物理伤害 %level%"
+  #   remove-command: "sx attribute %player% remove 物理伤害"
+  #
+  #   # AttributePlus 风格（示意）
+  #   # apply-command: "ap give %player% AttackDamage %level%"
+  #   # remove-command: "ap take %player% AttackDamage"
+  #
+  #   # BigAttribute 风格（示意）
+  #   # apply-command: "ba add %player% attack %level%"
+  #   # remove-command: "ba remove %player% attack"
+
+  # ---- 示例：暴击率 ----
+  # crit_rate:
+  #   display-name: "暴击率"
+  #   apply-command: "sx attribute %player% add 暴击率 %level%"
+  #   remove-command: "sx attribute %player% remove 暴击率"
+
+  # ---- 示例：最大生命值 ----
+  # max_health:
+  #   display-name: "最大生命值"
+  #   apply-command: "sx attribute %player% add 生命值 %level%"
+  #   remove-command: "sx attribute %player% remove 生命值"
+
+  # ---- 示例：移动速度（属性插件版本，区别于药水“速度”）----
+  # move_speed:
+  #   display-name: "移动速度(属性)"
+  #   apply-command: "sx attribute %player% add 移动速度 %level%"
+  #   remove-command: "sx attribute %player% remove 移动速度"

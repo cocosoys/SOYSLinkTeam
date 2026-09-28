@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SOYSLinkTeam · 队伍管理后台</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --sidebar-bg: #001529;
+    --sidebar-active: #1890ff;
+    --primary: #1890ff;
+    --primary-hover: #40a9ff;
+    --success: #52c41a;
+    --warning: #faad14;
+    --danger: #ff4d4f;
+    --text: #1f1f1f;
+    --text-2: #595959;
+    --text-3: #8c8c8c;
+    --border: #e8e8e8;
+    --bg: #f0f2f5;
+    --card: #ffffff;
+  }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                 "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+    color: var(--text); background: var(--bg); font-size: 14px;
+    display: flex; overflow: hidden;
+  }
+  /* ===== 侧边栏 ===== */
+  .sidebar {
+    width: 220px; background: var(--sidebar-bg); color: rgba(255,255,255,.65);
+    display: flex; flex-direction: column; flex-shrink: 0; height: 100%;
+  }
+  .logo {
+    height: 56px; display: flex; align-items: center; padding: 0 20px;
+    color: #fff; font-size: 16px; font-weight: 600; letter-spacing: .5px;
+    border-bottom: 1px solid rgba(255,255,255,.08); white-space: nowrap;
+  }
+  .logo .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); margin-right: 10px; box-shadow: 0 0 6px var(--success); }
+  .menu { flex: 1; padding: 12px 0; overflow-y: auto; }
+  .menu-item {
+    height: 44px; display: flex; align-items: center; padding: 0 24px;
+    cursor: pointer; transition: all .2s; color: rgba(255,255,255,.65);
+    border-left: 3px solid transparent; user-select: none;
+  }
+  .menu-item:hover { color: #fff; background: rgba(255,255,255,.06); }
+  .menu-item.active { color: #fff; background: var(--sidebar-active); border-left-color: #fff; }
+  .menu-item .ico { width: 18px; margin-right: 12px; text-align: center; font-style: normal; }
+  .sidebar-foot { padding: 14px 20px; font-size: 12px; color: rgba(255,255,255,.35); border-top: 1px solid rgba(255,255,255,.08); }
+
+  /* ===== 主区域 ===== */
+  .main { flex: 1; display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+  .topbar {
+    height: 56px; background: var(--card); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; padding: 0 24px; flex-shrink: 0;
+    box-shadow: 0 1px 4px rgba(0,21,41,.04);
+  }
+  .topbar h1 { font-size: 17px; font-weight: 600; flex: 1; }
+  .topbar .admin { display: flex; align-items: center; color: var(--text-2); margin-right: 16px; }
+  .avatar {
+    width: 30px; height: 30px; border-radius: 50%; background: var(--primary);
+    color: #fff; display: inline-flex; align-items: center; justify-content: center;
+    font-size: 13px; margin-right: 8px;
+  }
+  .content { flex: 1; overflow-y: auto; padding: 20px 24px; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* 卡片 / 统计 */
+  .stats { display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+  .stat-card {
+    background: var(--card); border-radius: 8px; padding: 18px 20px; flex: 1; min-width: 150px;
+    border: 1px solid var(--border);
+  }
+  .stat-card .label { color: var(--text-3); font-size: 13px; margin-bottom: 8px; }
+  .stat-card .num { font-size: 26px; font-weight: 600; }
+  .stat-card .num.blue { color: var(--primary); }
+  .stat-card .num.green { color: var(--success); }
+  .stat-card .num.orange { color: var(--warning); }
+  .stat-card .num.red { color: var(--danger); }
+
+  .panel { background: var(--card); border-radius: 8px; border: 1px solid var(--border); }
+  .panel-head { padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; }
+  .panel-head .t { font-weight: 600; flex: 1; }
+  .panel-body { padding: 18px 20px; }
+
+  /* 搜索 / 工具条 */
+  .toolbar { display: flex; gap: 10px; margin-bottom: 16px; align-items: center; flex-wrap: wrap; }
+  input[type=text], input[type=number], input[type=password], select, textarea {
+    height: 34px; padding: 4px 11px; border: 1px solid #d9d9d9; border-radius: 6px;
+    font-size: 14px; color: var(--text); background: #fff; outline: none; transition: border .2s;
+    font-family: inherit;
+  }
+  textarea { height: auto; padding: 8px 11px; resize: vertical; line-height: 1.5; }
+  input:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(24,144,255,.15); }
+  .toolbar input { min-width: 220px; }
+
+  .btn {
+    height: 34px; padding: 0 15px; border: 1px solid #d9d9d9; background: #fff; color: var(--text-2);
+    border-radius: 6px; cursor: pointer; font-size: 14px; display: inline-flex; align-items: center;
+    justify-content: center; gap: 5px; transition: all .2s; white-space: nowrap;
+  }
+  .btn:hover { border-color: var(--primary); color: var(--primary); }
+  .btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .btn.primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); color: #fff; }
+  .btn.success { background: var(--success); border-color: var(--success); color: #fff; }
+  .btn.success:hover { opacity: .9; color: #fff; }
+  .btn.warning { background: var(--warning); border-color: var(--warning); color: #fff; }
+  .btn.warning:hover { opacity: .9; color: #fff; }
+  .btn.danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+  .btn.danger:hover { opacity: .9; color: #fff; }
+  .btn.sm { height: 28px; padding: 0 10px; font-size: 12.5px; border-radius: 5px; }
+  .btn.link { border: none; background: none; padding: 0 6px; height: auto; }
+  .btn.link:hover { background: none; }
+
+  /* 表格 */
+  table { width: 100%; border-collapse: collapse; }
+  .table-wrap { overflow-x: auto; }
+  th, td { padding: 12px 12px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  th { background: #fafafa; color: var(--text-2); font-weight: 600; font-size: 13px; }
+  tbody tr:hover { background: #fafafa; }
+  .ops { display: flex; gap: 4px; flex-wrap: nowrap; }
+  .tag-mini { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 12px; line-height: 18px; }
+  .tag-green { background: #f6ffed; color: #389e0d; border: 1px solid #b7eb8f; }
+  .tag-red { background: #fff1f0; color: #cf1322; border: 1px solid #ffa39e; }
+  .tag-blue { background: #e6f7ff; color: #096dd9; border: 1px solid #91d5ff; }
+  .tag-gray { background: #fafafa; color: #595959; border: 1px solid #d9d9d9; }
+  .tag-orange { background: #fff7e6; color: #d46b08; border: 1px solid #ffd591; }
+  .muted { color: var(--text-3); }
+
+  /* 弹窗 */
+  .mask {
+    position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none;
+    align-items: flex-start; justify-content: center; z-index: 100; padding: 40px 16px; overflow-y: auto;
+  }
+  .mask.show { display: flex; }
+  .modal {
+    background: #fff; border-radius: 10px; width: 720px; max-width: 100%;
+    box-shadow: 0 8px 30px rgba(0,0,0,.18); animation: pop .18s ease;
+  }
+  @keyframes pop { from { transform: translateY(-12px); opacity: .4; } to { transform: none; opacity: 1; } }
+  .modal-head { padding: 16px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; }
+  .modal-head .t { font-size: 16px; font-weight: 600; flex: 1; }
+  .modal-close { cursor: pointer; color: var(--text-3); font-size: 20px; line-height: 1; border: none; background: none; }
+  .modal-close:hover { color: var(--text); }
+  .modal-body { padding: 20px 22px; max-height: 65vh; overflow-y: auto; }
+  .modal-foot { padding: 14px 22px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
+
+  .form-row { display: flex; align-items: flex-start; margin-bottom: 16px; }
+  .form-row label { width: 110px; flex-shrink: 0; padding-top: 7px; color: var(--text-2); text-align: right; padding-right: 14px; }
+  .form-row .ctl { flex: 1; }
+  .form-row input, .form-row select, .form-row textarea { width: 100%; }
+  .form-hint { font-size: 12px; color: var(--text-3); margin-top: 5px; }
+  .switch { position: relative; display: inline-block; width: 44px; height: 24px; margin-top: 5px; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider-sw { position: absolute; inset: 0; background: #ccc; border-radius: 24px; cursor: pointer; transition: .2s; }
+  .slider-sw:before { content: ""; position: absolute; height: 18px; width: 18px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .2s; }
+  .switch input:checked + .slider-sw { background: var(--success); }
+  .switch input:checked + .slider-sw:before { transform: translateX(20px); }
+
+  /* 增幅 / 申请列表项 */
+  .item-list { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 18px; }
+  .item { display: flex; align-items: center; padding: 11px 14px; border-bottom: 1px solid var(--border); gap: 12px; }
+  .item:last-child { border-bottom: none; }
+  .item .grow { flex: 1; min-width: 0; }
+  .item .name { font-weight: 600; }
+  .item .sub { color: var(--text-3); font-size: 12.5px; margin-top: 3px; }
+  .section-title { font-size: 13px; font-weight: 600; color: var(--text-2); margin: 4px 0 10px; }
+  .radio-kind { display: flex; gap: 8px; }
+  .radio-kind label { flex: 1; border: 1px solid #d9d9d9; border-radius: 6px; padding: 8px; text-align: center; cursor: pointer; }
+  .radio-kind input { display: none; }
+  .radio-kind input:checked + span { color: var(--primary); font-weight: 600; }
+  .radio-kind label:has(input:checked) { border-color: var(--primary); background: #e6f7ff; }
+
+  .member-pick { display: flex; align-items: center; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; gap: 12px; cursor: pointer; }
+  .member-pick:hover { border-color: var(--primary); background: #f0f8ff; }
+  .member-pick .radio { width: 16px; height: 16px; border: 2px solid #d9d9d9; border-radius: 50%; flex-shrink: 0; }
+  .member-pick.selected { border-color: var(--primary); background: #e6f7ff; }
+  .member-pick.selected .radio { border-color: var(--primary); background: radial-gradient(circle, var(--primary) 45%, transparent 50%); }
+
+  /* toast */
+  #toastBox { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 200; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+  .toast {
+    padding: 10px 18px; border-radius: 6px; color: #fff; font-size: 14px;
+    box-shadow: 0 4px 14px rgba(0,0,0,.15); animation: drop .2s; max-width: 80vw;
+  }
+  @keyframes drop { from { transform: translateY(-16px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .toast.ok { background: var(--success); }
+  .toast.err { background: var(--danger); }
+  .toast.info { background: var(--primary); }
+
+  .empty { text-align: center; color: var(--text-3); padding: 40px 0; }
+  .pager { display: flex; gap: 6px; justify-content: flex-end; margin-top: 14px; align-items: center; }
+  .log-level { font-weight: 600; }
+  .lv-INFO { color: var(--primary); } .lv-WARN { color: var(--warning); } .lv-ERROR { color: var(--danger); }
+  .kv { display: grid; grid-template-columns: repeat(2,1fr); gap: 14px; }
+  .kv .k { color: var(--text-3); font-size: 13px; margin-bottom: 4px; }
+  .kv .v { font-size: 15px; font-weight: 500; }
+</style>
+</head>
+<body>
+  <!-- 侧边栏 -->
+  <aside class="sidebar">
+    <div class="logo"><span class="dot"></span>SOYSLinkTeam</div>
+    <nav class="menu">
+      <div class="menu-item active" data-page="teams"><i class="ico">▤</i>队伍列表</div>
+      <div class="menu-item" data-page="settings"><i class="ico">⚙</i>系统设置</div>
+      <div class="menu-item" data-page="logs"><i class="ico">▦</i>操作日志</div>
+    </nav>
+    <div class="sidebar-foot">Spigot 1.12.2 · ERP 管理后台</div>
+  </aside>
+
+  <!-- 主区域 -->
+  <div class="main">
+    <div class="topbar">
+      <h1 id="pageTitle">队伍列表</h1>
+      <div class="admin"><span class="avatar" id="adminAvatar">-</span><span id="adminName">加载中…</span></div>
+      <button class="btn" onclick="refreshCurrent()">⟳ 刷新</button>
+    </div>
+    <div class="content">
+
+      <!-- 队伍列表 -->
+      <section class="page active" id="page-teams">
+        <div class="stats" id="overviewStats"></div>
+        <div class="panel">
+          <div class="panel-head"><span class="t">全部队伍</span></div>
+          <div class="panel-body">
+            <div class="toolbar">
+              <input type="text" id="teamKeyword" placeholder="输入队伍名关键字搜索" onkeydown="if(event.key==='Enter')loadTeams()">
+              <button class="btn primary" onclick="loadTeams()">搜索</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr>
+                  <th>队伍名</th><th>队长</th><th>人数</th><th>在线</th>
+                  <th>加入方式</th><th>增幅</th><th>申请</th><th style="text-align:right;">操作</th>
+                </tr></thead>
+                <tbody id="teamTbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 设置 -->
+      <section class="page" id="page-settings">
+        <div class="panel">
+          <div class="panel-head"><span class="t">系统设置（只读概览）</span></div>
+          <div class="panel-body"><div class="kv" id="settingsKv"></div>
+            <div class="form-hint" style="margin-top:18px;">如需修改以下设置，请编辑插件目录下的 config.yml / teams.yml / buff.yml 后执行 <b>/teamadmin reload</b>。</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 日志 -->
+      <section class="page" id="page-logs">
+        <div class="panel">
+          <div class="panel-head"><span class="t">操作日志</span></div>
+          <div class="panel-body">
+            <div class="toolbar">
+              <select id="logLevel">
+                <option value="">全部级别</option><option value="INFO">INFO</option>
+                <option value="WARN">WARN</option><option value="ERROR">ERROR</option>
+              </select>
+              <input type="text" id="logKeyword" placeholder="按操作者 / 动作 / 详情搜索" onkeydown="if(event.key==='Enter'){logPage=0;loadLogs();}">
+              <button class="btn primary" onclick="logPage=0;loadLogs()">查询</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th style="width:160px;">时间</th><th style="width:80px;">级别</th>
+                  <th style="width:130px;">操作者</th><th style="width:130px;">动作</th>
+                  <th>详情</th><th style="width:130px;">IP</th></tr></thead>
+                <tbody id="logTbody"></tbody>
+              </table>
+            </div>
+            <div class="pager">
+              <span class="muted" id="logTotal"></span>
+              <button class="btn sm" onclick="if(logPage>0){logPage--;loadLogs();}">上一页</button>
+              <button class="btn sm" onclick="logPage++;loadLogs();">下一页</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- 弹窗容器 -->
+  <div class="mask" id="mask"><div class="modal" id="modal">
+    <div class="modal-head"><span class="t" id="modalTitle"></span><button class="modal-close" onclick="closeModal()">×</button></div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot" id="modalFoot"></div>
+  </div></div>
+
+  <div id="toastBox"></div>
+
+<script>
+/* ============================================================
+   基础工具
+   ============================================================ */
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function toast(msg,type){
+  const box=$('toastBox'); const d=document.createElement('div');
+  d.className='toast '+(type||'ok'); d.textContent=msg; box.appendChild(d);
+  setTimeout(()=>{ d.style.opacity='0'; d.style.transition='opacity .3s'; setTimeout(()=>d.remove(),300); }, 2600);
+}
+async function api(path,options){
+  options=options||{};
+  options.credentials='same-origin';
+  options.headers=Object.assign({'Content-Type':'application/json'},options.headers||{});
+  let res;
+  try { res=await fetch(path,options); }
+  catch(e){ throw new Error('网络错误，无法连接服务器'); }
+  if(res.status===401||res.status===403){
+    toast('登录已失效或权限不足，请重新登录','err');
+    throw new Error('unauthorized');
+  }
+  let data; try{ data=await res.json(); }catch(e){ throw new Error('响应解析失败'); }
+  return data;
+}
+/* GET，返回 data 字段；失败抛错并提示 */
+async function getData(path){
+  const r=await api(path);
+  if(r.code!==200){ toast(r.msg||'请求失败','err'); throw new Error(r.msg); }
+  return r.data;
+}
+/* POST JSON，返回完整结果（由调用方判断） */
+async function postData(path,obj){
+  return await api(path,{method:'POST',body:JSON.stringify(obj||{})});
+}
+
+/* ============================================================
+   弹窗
+   ============================================================ */
+function openModal(title,bodyHtml,footHtml){
+  $('modalTitle').textContent=title;
+  $('modalBody').innerHTML=bodyHtml;
+  $('modalFoot').innerHTML=footHtml||'<button class="btn" onclick="closeModal()">关闭</button>';
+  $('mask').classList.add('show');
+}
+function closeModal(){ $('mask').classList.remove('show'); }
+$('mask').addEventListener('click',e=>{ if(e.target===$('mask')) closeModal(); });
+
+/* ============================================================
+   菜单路由
+   ============================================================ */
+const titles={teams:'队伍列表',settings:'系统设置',logs:'操作日志'};
+let current='teams';
+document.querySelectorAll('.menu-item').forEach(m=>{
+  m.onclick=()=>{
+    document.querySelectorAll('.menu-item').forEach(x=>x.classList.remove('active'));
+    m.classList.add('active');
+    current=m.dataset.page;
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    $('page-'+current).classList.add('active');
+    $('pageTitle').textContent=titles[current];
+    refreshCurrent();
+  };
+});
+function refreshCurrent(){
+  if(current==='teams'){ loadOverview(); loadTeams(); }
+  if(current==='settings'){ loadSettings(); }
+  if(current==='logs'){ loadLogs(); }
+}
+
+/* ============================================================
+   概览统计
+   ============================================================ */
+async function loadOverview(){
+  try{
+    const d=await getData('/api/admin/overview');
+    $('overviewStats').innerHTML=`
+      <div class="stat-card"><div class="label">队伍总数</div><div class="num blue">${d.totalTeams}</div></div>
+      <div class="stat-card"><div class="label">已装载队伍</div><div class="num">${d.loadedTeams}</div></div>
+      <div class="stat-card"><div class="label">在线玩家</div><div class="num green">${d.onlinePlayers}</div></div>
+      <div class="stat-card"><div class="label">待处理申请</div><div class="num orange">${d.pendingApplications}</div></div>
+      <div class="stat-card"><div class="label">活跃增幅</div><div class="num red">${d.activeBuffs}</div></div>`;
+    if(!$('adminName').textContent || $('adminName').textContent==='加载中…'){
+      // 操作者名由后端日志/上下文获取，这里用概览无法得到，使用 me 端点
+    }
+  }catch(e){}
+}
+
+/* ============================================================
+   队伍列表
+   ============================================================ */
+async function loadTeams(){
+  const kw=$('teamKeyword').value.trim();
+  try{
+    const d=await getData('/api/admin/teams?keyword='+encodeURIComponent(kw));
+    if(!d.list.length){ $('teamTbody').innerHTML='<tr><td colspan="8"><div class="empty">暂无队伍</div></td></tr>'; return; }
+    $('teamTbody').innerHTML=d.list.map(t=>{
+      const joinTag=t.open
+        ? (t.hasCost?`<span class="tag-mini tag-orange">付费 ${t.cost}</span>`:'<span class="tag-mini tag-green">无条件</span>')
+        : (t.hasPassword?'<span class="tag-mini tag-blue">口令</span>':'<span class="tag-mini tag-gray">申请/邀请</span>');
+      const size=t.size<0?'<span class="muted">—</span>':`${t.size}/${t.maxSize}`;
+      const online=t.onlineCount<0?'<span class="muted">—</span>':t.onlineCount;
+      return `<tr>
+        <td><b>${esc(t.name)}</b></td>
+        <td>${esc(t.leaderName)||'<span class="muted">—</span>'}</td>
+        <td>${size}</td><td>${online}</td>
+        <td>${joinTag}</td>
+        <td>${t.buffCount>0?`<span class="tag-mini tag-orange">${t.buffCount}</span>`:'<span class="muted">0</span>'}</td>
+        <td>${t.applicationCount>0?`<span class="tag-mini tag-blue">${t.applicationCount}</span>`:'<span class="muted">0</span>'}</td>
+        <td><div class="ops" style="justify-content:flex-end;">
+          <button class="btn sm warning" onclick="openBuff('${t.id}')">队伍增幅</button>
+          <button class="btn sm primary" onclick="openApplications('${t.id}')">申请列表</button>
+          <button class="btn sm" onclick="openTransfer('${t.id}')">更换队长</button>
+          <button class="btn sm danger" onclick="confirmDisband('${t.id}','${esc(t.name)}')">解散</button>
+          <button class="btn sm success" onclick="openConfig('${t.id}')">配置</button>
+        </div></td>
+      </tr>`;
+    }).join('');
+  }catch(e){}
+}
+
+/* ============================================================
+   队伍增幅
+   ============================================================ */
+let buffCtx={teamId:null,options:null,timer:null};
+async function openBuff(teamId){
+  buffCtx.teamId=teamId;
+  openModal('队伍增幅','<div class="empty">加载中…</div>');
+  try{
+    const [detail,options]=await Promise.all([
+      getData('/api/admin/team?id='+teamId),
+      getData('/api/admin/buff-options')
+    ]);
+    buffCtx.options=options;
+    renderBuffModal(detail);
+  }catch(e){ closeModal(); }
+}
+function potionOptions(kind){
+  const list=kind==='potion'?buffCtx.options.potions:buffCtx.options.attributes;
+  return list.map(o=>`<option value="${esc(o.key)}">${esc(o.name)}</option>`).join('');
+}
+function renderBuffModal(detail){
+  const buffs=detail.buffs||[];
+  $('modalTitle').textContent='队伍增幅 · '+detail.name;
+  $('modalBody').innerHTML=`
+    <div class="section-title">当前增幅（${buffs.length}）</div>
+    <div class="item-list" id="buffItems">${
+      buffs.length?buffs.map(b=>`<div class="item" data-buff='${JSON.stringify(b).replace(/'/g,"&#39;")}'>
+        <div class="grow"><div class="name">${esc(b.displayName)} <span class="tag-mini tag-orange">${b.levelDisplay}</span>
+          <span class="tag-mini tag-blue">${esc(b.kindDisplay)}</span></div>
+          <div class="sub">剩余 <b class="remain">${esc(b.remainingText)}</b></div></div>
+        <button class="btn sm danger" onclick="removeBuff('${b.id}')">移除</button>
+      </div>`).join(''):'<div class="empty">暂无增幅</div>'
+    }</div>
+    <div class="section-title">添加增幅（类似信标效果）</div>
+    <div class="form-row"><label>增幅类型</label><div class="ctl radio-kind">
+      <label><input type="radio" name="bk" value="potion" checked onchange="switchBuffKind()"><span>药水效果</span></label>
+      <label><input type="radio" name="bk" value="attribute" onchange="switchBuffKind()"><span>属性插件</span></label>
+    </div></div>
+    <div class="form-row"><label>效果</label><div class="ctl">
+      <select id="bfEffect">${potionOptions('potion')}</select>
+      <div class="form-hint" id="bfHint">药水效果对全队在线成员持续生效，类似信标。</div>
+    </div></div>
+    <div class="form-row"><label>等级</label><div class="ctl">
+      <select id="bfLevel">${[1,2,3,4,5].map(i=>`<option value="${i-1}">${['I','II','III','IV','V'][i-1]}</option>`).join('')}</select>
+    </div></div>
+    <div class="form-row"><label>持续时长(秒)</label><div class="ctl">
+      <input type="number" id="bfDuration" value="60" min="1">
+      <div class="form-hint">可扩展属性插件：${buffCtx.options.attributePlugins.join('、')}</div>
+    </div></div>`;
+  $('modalFoot').innerHTML=`
+    <button class="btn" onclick="closeModal()">关闭</button>
+    <button class="btn primary" onclick="submitBuff()">添加增幅</button>`;
+  if(buffCtx.timer) clearInterval(buffCtx.timer);
+  buffCtx.timer=setInterval(updateBuffRemain,1000);
+}
+function switchBuffKind(){
+  const kind=document.querySelector('input[name=bk]:checked').value;
+  $('bfEffect').innerHTML=potionOptions(kind);
+  $('bfHint').textContent=kind==='potion'
+    ? '药水效果对全队在线成员持续生效，类似信标。'
+    : '属性增幅通过 buff.yml 中配置的控制台命令给予/移除，请先在配置中声明该属性。';
+}
+function updateBuffRemain(){
+  document.querySelectorAll('#buffItems .item').forEach(it=>{
+    let b; try{ b=JSON.parse(it.dataset.buff); }catch(e){ return; }
+    if(b.startedAt&&b.duration){
+      const remain=Math.max(0,Math.floor((b.startedAt+b.duration*1000-Date.now())/1000));
+      const el=it.querySelector('.remain'); if(el) el.textContent=fmtRemain(remain);
+      b.remaining=remain; it.dataset.buff=JSON.stringify(b);
+    }
+  });
+}
+function fmtRemain(s){
+  if(s<=0) return '已结束';
+  const d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60),sec=s%60;
+  if(d>0) return d+'天'+h+'小时';
+  if(h>0) return h+'小时'+m+'分';
+  if(m>0) return m+'分'+sec+'秒';
+  return sec+'秒';
+}
+async function submitBuff(){
+  const kind=document.querySelector('input[name=bk]:checked').value;
+  const effectKey=$('bfEffect').value;
+  const amplifier=parseInt($('bfLevel').value);
+  const duration=parseInt($('bfDuration').value);
+  const r=await postData('/api/admin/buff/add',{teamId:buffCtx.teamId,kind,effectKey,amplifier,duration});
+  if(r.code===200){ toast('增幅已添加'); openBuff(buffCtx.teamId); }
+  else toast(r.msg||'添加失败','err');
+}
+async function removeBuff(buffId){
+  const r=await postData('/api/admin/buff/remove',{teamId:buffCtx.teamId,buffId});
+  if(r.code===200){ toast('增幅已移除'); openBuff(buffCtx.teamId); }
+  else toast(r.msg||'移除失败','err');
+}
+
+/* ============================================================
+   申请列表
+   ============================================================ */
+async function openApplications(teamId){
+  openModal('申请列表','<div class="empty">加载中…</div>');
+  try{
+    const list=await getData('/api/admin/applications?teamId='+teamId);
+    $('modalBody').innerHTML=list.length?`<div class="item-list">${list.map(a=>`
+      <div class="item"><div class="grow">
+        <div class="name">${esc(a.applicantName)} ${a.online?'<span class="tag-mini tag-green">在线</span>':'<span class="tag-mini tag-gray">离线</span>'}</div>
+        <div class="sub">${a.message?esc(a.message):'（无留言）'} · ${esc(a.createdAtText)} · 剩余 ${fmtRemain(a.remaining)}</div>
+      </div>
+      <button class="btn sm success" onclick="decideApp('${teamId}','${a.applicant}','${esc(a.applicantName)}',true)">批准</button>
+      <button class="btn sm danger" onclick="decideApp('${teamId}','${a.applicant}','${esc(a.applicantName)}',false)">拒绝</button>
+      </div>`).join('')}</div>`:'<div class="empty">暂无待处理申请</div>';
+  }catch(e){ closeModal(); }
+}
+async function decideApp(teamId,playerId,playerName,approve){
+  let r;
+  if(approve){ r=await postData('/api/admin/application/approve',{teamId,playerId,playerName}); }
+  else {
+    const reason=prompt('请输入拒绝理由（可留空）：')||'';
+    r=await postData('/api/admin/application/deny',{teamId,playerId,playerName,reason});
+  }
+  if(r.code===200){ toast(r.msg||'操作成功'); openApplications(teamId); loadOverview(); }
+  else toast(r.msg||'操作失败','err');
+}
+
+/* ============================================================
+   更换队长
+   ============================================================ */
+let transferPick=null;
+async function openTransfer(teamId){
+  transferPick=null;
+  openModal('更换队长','<div class="empty">加载中…</div>');
+  try{
+    const d=await getData('/api/admin/team?id='+teamId);
+    $('modalBody').innerHTML=`
+      <div class="form-hint" style="margin-bottom:14px;">队伍 <b>${esc(d.name)}</b>，请选择新队长：</div>
+      ${d.members.map(m=>`<div class="member-pick" id="mp-${m.uuid}" onclick="pickMember('${m.uuid}')">
+        <span class="radio"></span>
+        <div class="grow"><div class="name">${esc(m.name)}
+          ${m.role==='LEADER'?'<span class="tag-mini tag-orange">现任队长</span>':''}
+          ${m.role==='ADMIN'?'<span class="tag-mini tag-blue">副队长</span>':''}
+          ${m.online?'<span class="tag-mini tag-green">在线</span>':'<span class="tag-mini tag-gray">离线</span>'}</div></div>
+      </div>`).join('')}`;
+    $('modalFoot').innerHTML=`
+      <button class="btn" onclick="closeModal()">取消</button>
+      <button class="btn primary" onclick="doTransfer('${teamId}')">确认更换</button>`;
+  }catch(e){ closeModal(); }
+}
+function pickMember(uuid){
+  transferPick=uuid;
+  document.querySelectorAll('.member-pick').forEach(x=>x.classList.remove('selected'));
+  const el=$('mp-'+uuid); if(el) el.classList.add('selected');
+}
+async function doTransfer(teamId){
+  if(!transferPick){ toast('请先选择新队长','err'); return; }
+  const r=await postData('/api/admin/transfer',{teamId,playerId:transferPick});
+  if(r.code===200){ toast('队长已更换'); closeModal(); loadTeams(); }
+  else toast(r.msg||'更换失败','err');
+}
+
+/* ============================================================
+   队伍配置
+   ============================================================ */
+async function openConfig(teamId){
+  openModal('队伍配置','<div class="empty">加载中…</div>');
+  try{
+    const d=await getData('/api/admin/team?id='+teamId);
+    const s=d.settings;
+    $('modalBody').innerHTML=`
+      <div class="form-row"><label>队伍名</label><div class="ctl">
+        <input type="text" id="cfgName" value="${esc(d.name)}">
+        <div class="form-hint">${d.name} · 创建于 ${esc(d.createdAtText)}</div></div></div>
+      <div class="form-row"><label>无条件加入</label><div class="ctl">
+        <label class="switch"><input type="checkbox" id="cfgOpen" ${s.open?'checked':''}><span class="slider-sw"></span></label>
+        <div class="form-hint">开启后任何人可直接加入，无需口令 / 审批（仍受人数上限约束）。</div></div></div>
+      <div class="form-row"><label>入队口令</label><div class="ctl">
+        <input type="text" id="cfgPassword" placeholder="${s.hasPassword?'已设置（留空保持不变，输入 off 清除）':'未设置，输入口令以启用'}">
+        <div class="form-hint">口令以 SHA-256 哈希存储，不会明文保存。</div></div></div>
+      <div class="form-row"><label>入队费用</label><div class="ctl">
+        <input type="number" id="cfgCost" value="${s.hasCost?s.cost:''}" placeholder="留空或 0 表示免费，输入 off 清除">
+        <div class="form-hint">需安装 Vault 并启用经济入队方式。</div></div></div>
+      <div class="form-row"><label>队伍公告</label><div class="ctl">
+        <textarea id="cfgNotice" rows="3">${esc(s.notice||'')}</textarea></div></div>`;
+    $('modalFoot').innerHTML=`
+      <button class="btn" onclick="closeModal()">取消</button>
+      <button class="btn primary" onclick="saveConfig('${teamId}')">保存配置</button>`;
+  }catch(e){ closeModal(); }
+}
+async function saveConfig(teamId){
+  const payload={
+    teamId,
+    name:$('cfgName').value.trim(),
+    open:$('cfgOpen').checked,
+    cost:$('cfgCost').value,
+    notice:$('cfgNotice').value
+  };
+  const pw=$('cfgPassword').value;
+  if(pw) payload.password=pw;
+  const r=await postData('/api/admin/config',payload);
+  if(r.code===200){ toast('配置已保存'); closeModal(); loadTeams(); }
+  else toast(r.msg||'保存失败','err');
+}
+
+/* ============================================================
+   解散
+   ============================================================ */
+function confirmDisband(teamId,name){
+  openModal('解散队伍',`
+    <div style="padding:6px 0;">确定要解散队伍 <b>${name}</b> 吗？</div>
+    <div class="form-hint">解散后全部成员将被移出，增幅与申请被清除，队伍数据被删除，<b>此操作不可恢复</b>。</div>`,
+    `<button class="btn" onclick="closeModal()">取消</button>
+     <button class="btn danger" onclick="doDisband('${teamId}')">确认解散</button>`);
+}
+async function doDisband(teamId){
+  const r=await postData('/api/admin/disband',{teamId});
+  if(r.code===200){ toast('队伍已解散'); closeModal(); loadTeams(); loadOverview(); }
+  else toast(r.msg||'解散失败','err');
+}
+
+/* ============================================================
+   系统设置
+   ============================================================ */
+async function loadSettings(){
+  try{
+    const d=await getData('/api/admin/settings');
+    const row=(k,v)=>`<div><div class="k">${k}</div><div class="v">${v}</div></div>`;
+    const yn=b=>b?'<span class="tag-mini tag-green">开启</span>':'<span class="tag-mini tag-red">关闭</span>';
+    $('settingsKv').innerHTML=[
+      row('语言',esc(d.language)),
+      row('调试模式',yn(d.debug)),
+      row('默认人数上限',d.defaultMaxSize),
+      row('硬人数上限',d.hardMaxSize),
+      row('存储镜像',yn(d.mirrorEnabled)),
+      row('镜像异步',yn(d.mirrorAsync)),
+      row('队伍频道聊天',yn(d.teamChatEnabled)),
+      row('头顶名称',yn(d.nametagEnabled))
+    ].join('');
+  }catch(e){}
+}
+
+/* ============================================================
+   日志
+   ============================================================ */
+let logPage=0; const LOG_SIZE=20;
+async function loadLogs(){
+  const level=$('logLevel').value, kw=$('logKeyword').value.trim();
+  try{
+    const d=await getData(`/api/admin/logs?level=${encodeURIComponent(level)}&keyword=${encodeURIComponent(kw)}&page=${logPage}&pageSize=${LOG_SIZE}`);
+    $('logTotal').textContent=`共 ${d.total} 条 · 第 ${d.page+1} 页`;
+    $('logTbody').innerHTML=d.list.length?d.list.map(l=>`
+      <tr><td>${esc(l.timeText)}</td>
+        <td class="log-level lv-${l.level}">${l.level}</td>
+        <td>${esc(l.operator)}</td><td>${esc(l.action)}</td>
+        <td>${esc(l.detail)}</td><td class="muted">${esc(l.ip)}</td></tr>`).join('')
+      :'<tr><td colspan="6"><div class="empty">暂无日志</div></td></tr>';
+  }catch(e){}
+}
+
+/* ============================================================
+   启动：获取当前操作者
+   ============================================================ */
+(async function init(){
+  loadOverview(); loadTeams();
+  // 用户端 me 端点（代理，无插件前缀）
+  try{
+    const r=await api('/api/user/me');
+    if(r.code===200&&r.data){
+      $('adminName').textContent=r.data.name;
+      $('adminAvatar').textContent=(r.data.name||'?').charAt(0).toUpperCase();
+    }
+  }catch(e){}
+})();
+</script>
+</body>
+</html>

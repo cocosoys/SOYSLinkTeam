@@ -3,3 +3,5 @@
 target/
 TODO.md
 *.html
+# 插件内置网页资源必须随 jar 发布，不忽略
+!src/main/resources/web/*.html

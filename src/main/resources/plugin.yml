@@ -10,12 +10,14 @@ depend:
 # ProtocolLib 为头顶名称（数据包方案）的运行依赖，缺失时头顶名称功能自动停用。
 # Vault 为经济消耗入队（EconomyJoinMethod）的运行依赖，缺失时经济入队自动停用。
 # LuckPerms 为上下文注入与 VIP 元数据读取的运行依赖，缺失时这两项功能自动停用。
+# SOYSHTTPOverMC 为网页管理（ERP 后台 / TIM 用户端）的运行依赖，缺失时网页功能自动停用。
 softdepend:
   - Essentials
   - CMI
   - ProtocolLib
   - Vault
   - LuckPerms
+  - SOYSHTTPOverMC
 
 commands:
   steam:
