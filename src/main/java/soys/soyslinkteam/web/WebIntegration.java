@@ -10,10 +10,10 @@ import soys.soyslinkteam.SOYSLinkTeam;
  *
  * <p>负责在插件启用时探测宿主并挂载 {@link TeamExpansion}——由该扩展一次性完成：</p>
  * <ul>
- *   <li>SOYSHTTPOverMC 侧：代理登记 {@link TeamAdminApi}（{@code /api/admin/*}）、
- *       {@link TeamUserApi}（{@code /api/user/*}）与两个页面
- *       {@code /team-admin}（管理后台）、{@code /team-user}（TIM 用户端）；</li>
- *   <li>MCERP 侧：登记 ERP 门户模块与菜单（MCERP 缺失时静默跳过）。</li>
+ *   <li>SOYSHTTPOverMC 侧：标准命名空间登记 {@code /api/plugins/soyslinkteam/*} 下的
+ *       spring 分层 controller（{@code soys.soyslinkteam.spring.*}），并托管前端 dist
+ *       于 {@code /web/plugins/soyslinkteam/}；</li>
+ *   <li>MCERP 侧：登记 ERP 门户模块与多入口菜单（MCERP 缺失时静默跳过）。</li>
  * </ul>
  *
  * <p>注册与反注册由 {@code SoysExpansion} 骨架管理：端点在插件禁用时由宿主按 owner 自动清理，
@@ -55,7 +55,7 @@ public class WebIntegration {
                 return;
             }
             hooked = true;
-            plugin.getLogger().info("已挂载网页管理：/team-admin（后台） /team-user（用户端）"
+            plugin.getLogger().info("已挂载队伍 ERP：/web/plugins/soyslinkteam/"
                     + (isMcerpPresent() ? "，并已登记 ERP 门户模块" : "（未检测到 MCERP，跳过门户登记）"));
         } catch (Throwable t) {
             plugin.getLogger().warning("挂载网页管理失败: " + t.getMessage());

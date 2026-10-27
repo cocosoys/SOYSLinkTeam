@@ -3,8 +3,11 @@
 target/
 TODO.md
 *.html
-# 插件内置网页资源必须随 jar 发布，不忽略
-!src/main/resources/web/*.html
+# 插件内置网页资源必须随 jar 发布，不忽略（旧手写页面已下线，改为 dist 内置子应用）
+!src/main/resources/dist/*.html
+
+# 前端工程独立仓库（MCERP-Vue2-example），不纳入本插件仓库
+MCERP-Vue2-example/
 
 # 调试日志与反编译临时产物
 build.exit
