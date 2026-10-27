@@ -6,7 +6,6 @@ import org.bukkit.command.CommandSender;
 import soys.soyslinkteam.SOYSLinkTeam;
 import soys.soyslinkteam.command.SubCommand;
 import soys.soyslinkteam.command.sub.InfoSub;
-import soys.soyslinkteam.util.Placeholders;
 import soys.soyslinkteam.util.Text;
 
 import java.util.Arrays;
@@ -41,7 +40,7 @@ public class AdminInfoSub extends SubCommand {
     @Override
     public void execute(CommandSender sender, String label, String[] args) {
         if (args.length < 1) {
-            msgList(sender, "admin.usage", null);
+            msgList(sender, "soyslinkteam.admin.usage");
             return;
         }
         String input = Text.join(args, 0).trim();
@@ -53,13 +52,12 @@ public class AdminInfoSub extends SubCommand {
             }
             UUID playerId = resolvePlayer(input);
             if (playerId == null) {
-                msg(sender, "team.team-not-found", Placeholders.of("team", input).build());
+                msg(sender, "soyslinkteam.team.team-not-found", input);
                 return;
             }
             plugin.getTeamManager().getPlayerTeamAsync(playerId, playerTeam -> {
                 if (playerTeam == null) {
-                    msg(sender, "team.target-not-in-team",
-                            Placeholders.of("player", input).build());
+                    msg(sender, "soyslinkteam.team.target-not-in-team", input);
                     return;
                 }
                 new InfoSub(plugin).sendInfo(sender, playerTeam);

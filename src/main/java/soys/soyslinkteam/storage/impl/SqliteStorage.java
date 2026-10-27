@@ -75,7 +75,8 @@ public class SqliteStorage extends SqlStorage {
                         + "join_password TEXT,"
                         + "notice TEXT,"
                         + "tag TEXT,"
-                        + "economy_cost REAL NOT NULL DEFAULT 0"
+                        + "economy_cost REAL NOT NULL DEFAULT 0,"
+                        + "item_cost TEXT NOT NULL DEFAULT ''"
                         + ")",
                 "CREATE TABLE IF NOT EXISTS " + membersTable() + " ("
                         + "team_id TEXT NOT NULL,"

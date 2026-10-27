@@ -1,8 +1,5 @@
 package soys.soyslinkteam.join;
 
-import java.util.Collections;
-import java.util.Map;
-
 /**
  * 入队尝试的结果。
  * <p>
@@ -12,6 +9,8 @@ import java.util.Map;
  *   <li>{@link Outcome#DENIED} — 条件适用但被明确拒绝（如口令错误），立即中断并向玩家反馈；</li>
  *   <li>{@link Outcome#NOT_APPLICABLE} — 该方式对当前场景不适用，注册表继续尝试下一种方式。</li>
  * </ul>
+ * 占位符采用位置参数 {@code {0} {1} ...}，与语言文件中的顺序一致。
+ * </p>
  */
 public class JoinResult {
 
@@ -23,25 +22,20 @@ public class JoinResult {
 
     private final Outcome outcome;
     private final String messageKey;
-    private final Map<String, String> placeholders;
+    private final Object[] args;
 
-    private JoinResult(Outcome outcome, String messageKey, Map<String, String> placeholders) {
+    private JoinResult(Outcome outcome, String messageKey, Object[] args) {
         this.outcome = outcome;
         this.messageKey = messageKey;
-        this.placeholders = placeholders == null
-                ? Collections.<String, String>emptyMap() : placeholders;
+        this.args = args == null ? new Object[0] : args;
     }
 
     public static JoinResult success() {
         return new JoinResult(Outcome.SUCCESS, null, null);
     }
 
-    public static JoinResult denied(String messageKey) {
-        return new JoinResult(Outcome.DENIED, messageKey, null);
-    }
-
-    public static JoinResult denied(String messageKey, Map<String, String> placeholders) {
-        return new JoinResult(Outcome.DENIED, messageKey, placeholders);
+    public static JoinResult denied(String messageKey, Object... args) {
+        return new JoinResult(Outcome.DENIED, messageKey, args);
     }
 
     public static JoinResult notApplicable() {
@@ -68,7 +62,7 @@ public class JoinResult {
         return messageKey;
     }
 
-    public Map<String, String> getPlaceholders() {
-        return placeholders;
+    public Object[] getArgs() {
+        return args;
     }
 }

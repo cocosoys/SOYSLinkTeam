@@ -188,7 +188,8 @@ public class ApplicationManager {
         Bukkit.getScheduler().runTask(plugin, () -> {
             if (!plugin.getTeamManager().hasTeam(applicantId)) {
                 plugin.getTeamManager().addMember(team, applicant, TeamRole.MEMBER);
-                applicant.sendMessage("§a你的入队申请已被批准，欢迎加入 " + team.getName());
+                plugin.getMessageManager().send(applicant, "soyslinkteam.apply.approved",
+                        team.getName());
             }
         });
         return ApproveResult.SUCCESS;
@@ -209,8 +210,9 @@ public class ApplicationManager {
         removeApplication(application);
         Player applicant = Bukkit.getPlayer(applicantId);
         if (applicant != null && applicant.isOnline()) {
-            applicant.sendMessage("§c你加入 " + application.getTeamName() + " 的申请被拒绝"
-                    + (reason == null || reason.isEmpty() ? "" : "：" + reason));
+            plugin.getMessageManager().send(applicant, "soyslinkteam.apply.denied",
+                    application.getTeamName(),
+                    reason == null || reason.isEmpty() ? "未填写" : reason);
         }
         return ApproveResult.SUCCESS;
     }

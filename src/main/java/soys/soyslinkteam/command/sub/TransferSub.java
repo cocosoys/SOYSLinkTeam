@@ -8,7 +8,6 @@ import soys.soyslinkteam.event.TeamTransferEvent;
 import soys.soyslinkteam.permission.TeamAction;
 import soys.soyslinkteam.team.Team;
 import soys.soyslinkteam.team.TeamMember;
-import soys.soyslinkteam.util.Placeholders;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,7 +38,7 @@ public class TransferSub extends SubCommand {
         Player player = (Player) sender;
 
         if (args.length < 1) {
-            msg(player, "member.transfer.usage", Placeholders.of("label", label).build());
+            msg(player, "soyslinkteam.member.transfer.usage", label);
             return;
         }
 
@@ -51,13 +50,12 @@ public class TransferSub extends SubCommand {
             String targetName = args[0];
             TeamMember target = team.getMemberByName(targetName);
             if (target == null) {
-                msg(player, "team.target-not-in-your-team",
-                        Placeholders.of("player", targetName).build());
+                msg(player, "soyslinkteam.team.target-not-in-your-team", targetName);
                 return;
             }
 
             if (team.isLeader(target.getUuid())) {
-                msg(player, "member.transfer.cannot-transfer-self", null);
+                msg(player, "soyslinkteam.member.transfer.cannot-transfer-self");
                 return;
             }
 
@@ -71,15 +69,13 @@ public class TransferSub extends SubCommand {
             team.transferLeader(target.getUuid());
             plugin.getTeamManager().save(team);
 
-            msg(player, "member.transfer.success",
-                    Placeholders.of("player", target.getName()).build());
-            team.broadcast(plugin.getMessageManager().get("member.transfer.broadcast",
-                    Placeholders.of("player", target.getName()).build()));
+            msg(player, "soyslinkteam.member.transfer.success", target.getName());
+            team.broadcast(plugin.getMessageManager().get("soyslinkteam.member.transfer.broadcast",
+                    target.getName()));
 
             Player newLeader = target.getPlayer();
             if (newLeader != null && newLeader.isOnline()) {
-                msg(newLeader, "member.transfer.received",
-                        Placeholders.of("team", team.getName()).build());
+                msg(newLeader, "soyslinkteam.member.transfer.received", team.getName());
             }
         });
     }

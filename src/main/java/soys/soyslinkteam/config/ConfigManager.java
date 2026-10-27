@@ -22,6 +22,9 @@ import java.util.List;
  */
 public class ConfigManager {
 
+    /** 当前配置版本，旧配置会被自动迁移/补齐到该版本 */
+    public static final int CURRENT_CONFIG_VERSION = 2;
+
     private final SOYSLinkTeam plugin;
     /** 主配置文件（config.yml） */
     private FileConfiguration config;
@@ -40,6 +43,7 @@ public class ConfigManager {
         plugin.saveDefaultConfig();
         plugin.reloadConfig();
         this.config = plugin.getConfig();
+        upgradeConfig();
 
         // ---- teams.yml ----
         File rulesFile = new File(plugin.getDataFolder(), "teams.yml");
@@ -61,6 +65,93 @@ public class ConfigManager {
         FileConfiguration buffDefaults = loadBuffDefaults();
         if (buffDefaults != null) {
             buffConfig.setDefaults(buffDefaults);
+        }
+    }
+
+    // ================================================================
+    //  配置自动升级
+    // ================================================================
+
+    /**
+     * 检测并执行配置自动升级。
+     * <p>旧版 config.yml 缺少新版本字段时，从 jar 内默认配置补齐缺失键（不覆盖用户已有值），
+     * 升级完成后回写 {@code config-version} 并保存文件。</p>
+     * <p>注意：Bukkit 保存 YAML 时会丢失注释，该代价仅在一次性升级时产生。</p>
+     */
+    private void upgradeConfig() {
+        int version = config.getInt("config-version", 1);
+        if (version >= CURRENT_CONFIG_VERSION) {
+            return;
+        }
+        plugin.getLogger().info("检测到旧版本配置文件 (v" + version + ")，正在自动升级到 v"
+                + CURRENT_CONFIG_VERSION + "...");
+        boolean changed = false;
+        if (version < 2) {
+            changed |= migrateTo2();
+        }
+        if (changed) {
+            config.set("config-version", CURRENT_CONFIG_VERSION);
+            plugin.saveConfig();
+            plugin.getLogger().info("配置升级完成，已写入 config-version: "
+                    + CURRENT_CONFIG_VERSION + "（升级过程会丢失原文件注释，请知悉）。");
+        } else {
+            // 无需迁移也要推进版本号，避免每次启动重复检测
+            config.set("config-version", CURRENT_CONFIG_VERSION);
+            plugin.saveConfig();
+        }
+    }
+
+    /** v1 -&gt; v2：新增 storage.backup 定时备份段，从 jar 默认配置补齐所有缺失键。 */
+    private boolean migrateTo2() {
+        FileConfiguration defaults = loadConfigDefaults();
+        if (defaults == null) {
+            return false;
+        }
+        return supplementMissing(config, defaults, "");
+    }
+
+    /**
+     * 递归地把 defaults 中缺失的键补写到 target，已存在的键保持用户值不变。
+     *
+     * @return 是否发生了补写
+     */
+    private boolean supplementMissing(ConfigurationSection target,
+                                      ConfigurationSection defaults, String path) {
+        boolean changed = false;
+        for (String key : defaults.getKeys(false)) {
+            if (defaults.isConfigurationSection(key)) {
+                ConfigurationSection defaultSection = defaults.getConfigurationSection(key);
+                if (defaultSection == null) {
+                    continue;
+                }
+                if (!target.isConfigurationSection(key)) {
+                    if (!target.contains(key)) {
+                        // 整节缺失：深拷贝默认节
+                        target.createSection(key, defaultSection.getValues(true));
+                        changed = true;
+                    }
+                } else {
+                    changed |= supplementMissing(target.getConfigurationSection(key),
+                            defaultSection, path.isEmpty() ? key : path + "." + key);
+                }
+            } else if (!target.contains(key)) {
+                target.set(key, defaults.get(key));
+                changed = true;
+            }
+        }
+        return changed;
+    }
+
+    /** 从 jar 内资源读取 config.yml 默认值（用于升级补齐）。 */
+    private FileConfiguration loadConfigDefaults() {
+        try (InputStream stream = plugin.getResource("config.yml")) {
+            if (stream == null) {
+                return null;
+            }
+            return YamlConfiguration.loadConfiguration(
+                    new InputStreamReader(stream, StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            return null;
         }
     }
 
@@ -191,6 +282,31 @@ public class ConfigManager {
 
     public boolean isSyncOnStartup() {
         return config.getBoolean("storage.mirror.sync-on-startup", false);
+    }
+
+    // ================================================================
+    //  定时备份
+    // ================================================================
+
+    /** 定时快照备份是否启用。 */
+    public boolean isBackupEnabled() {
+        return config.getBoolean("storage.backup.enabled", false);
+    }
+
+    /** 定时备份间隔（tick），0 表示关闭。 */
+    public long getBackupIntervalTicks() {
+        long minutes = config.getLong("storage.backup.interval", 60L);
+        return minutes <= 0 ? 0L : Math.max(1L, minutes) * 60L * 20L;
+    }
+
+    /** 保留的最近备份份数。 */
+    public int getBackupKeepLast() {
+        return Math.max(1, config.getInt("storage.backup.keep-last", 5));
+    }
+
+    /** 备份文件存放目录（相对于 plugins/SOYSLinkTeam/）。 */
+    public String getBackupDirectory() {
+        return config.getString("storage.backup.directory", "backups");
     }
 
     // ================================================================

@@ -1,11 +1,13 @@
 package soys.soyslinkteam.storage.impl;
 
+import org.bukkit.configuration.file.YamlConfiguration;
 import soys.soyslinkteam.SOYSLinkTeam;
 import soys.soyslinkteam.storage.DataStorage;
 import soys.soyslinkteam.team.Team;
 import soys.soyslinkteam.team.TeamMember;
 import soys.soyslinkteam.team.TeamRole;
 
+import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -336,14 +338,25 @@ public abstract class SqlStorage implements DataStorage {
         }
     }
 
+    @Override
+    public void snapshotTo(File file) throws Exception {
+        Collection<Team> teams = loadAllTeams();
+        YamlConfiguration snapshot = new YamlConfiguration();
+        snapshot.createSection(TeamYaml.ROOT);
+        for (Team team : teams) {
+            TeamYaml.write(snapshot, TeamYaml.ROOT + "." + team.getId(), team);
+        }
+        snapshot.save(file);
+    }
+
     // ================================================================
     //  内部
     // ================================================================
 
     private void writeTeam(Connection conn, Team team) throws SQLException {
         String teamSql = "REPLACE INTO " + teamsTable()
-                + " (id, name, leader, created_at, is_open, join_password, notice, tag, economy_cost)"
-                + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                + " (id, name, leader, created_at, is_open, join_password, notice, tag, economy_cost, item_cost)"
+                + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement statement = conn.prepareStatement(teamSql)) {
             statement.setString(1, team.getId().toString());
             statement.setString(2, team.getName());
@@ -354,6 +367,7 @@ public abstract class SqlStorage implements DataStorage {
             statement.setString(7, team.getSettings().getNotice());
             statement.setString(8, team.getSettings().getTag());
             statement.setDouble(9, team.getSettings().getEconomyCost());
+            statement.setString(10, encodeItemCost(team.getSettings().getItemCost()));
             statement.executeUpdate();
         }
 
@@ -416,6 +430,11 @@ public abstract class SqlStorage implements DataStorage {
         } catch (SQLException ignored) {
             // 旧表无 economy_cost 列时使用默认值 0
         }
+        try {
+            team.getSettings().setItemCost(decodeItemCost(rs.getString("item_cost")));
+        } catch (SQLException ignored) {
+            // 旧表无 item_cost 列时使用空列表
+        }
         return team;
     }
 
@@ -442,5 +461,41 @@ public abstract class SqlStorage implements DataStorage {
         } catch (IllegalArgumentException e) {
             return null;
         }
+    }
+
+    /**
+     * 将物品消耗列表编码为单列字符串，元素以逗号分隔（格式 "MATERIAL:AMOUNT"）。
+     */
+    private static String encodeItemCost(java.util.List<String> items) {
+        if (items == null || items.isEmpty()) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (String item : items) {
+            if (item == null || item.trim().isEmpty()) {
+                continue;
+            }
+            if (sb.length() > 0) {
+                sb.append(',');
+            }
+            sb.append(item.trim());
+        }
+        return sb.toString();
+    }
+
+    /**
+     * 从单列字符串解码物品消耗列表（逗号分隔）。
+     */
+    private static java.util.List<String> decodeItemCost(String raw) {
+        java.util.List<String> list = new java.util.ArrayList<>();
+        if (raw == null || raw.trim().isEmpty()) {
+            return list;
+        }
+        for (String part : raw.split(",")) {
+            if (!part.trim().isEmpty()) {
+                list.add(part.trim());
+            }
+        }
+        return list;
     }
 }

@@ -5,7 +5,6 @@ import org.bukkit.entity.Player;
 import soys.soyslinkteam.SOYSLinkTeam;
 import soys.soyslinkteam.command.SubCommand;
 import soys.soyslinkteam.permission.TeamAction;
-import soys.soyslinkteam.util.Placeholders;
 
 import java.util.Arrays;
 import java.util.List;
@@ -51,10 +50,8 @@ public class DisbandSub extends SubCommand {
                 if (expireAt == null || now > expireAt) {
                     int timeout = plugin.getConfigManager().getConfirmTimeout();
                     confirmations.put(player.getUniqueId(), now + timeout * 1000L);
-                    msg(player, "team.disband.confirm", Placeholders
-                            .of("team", team.getName()).and("seconds", timeout).build());
-                    msg(player, "general.confirm-required",
-                            Placeholders.of("seconds", timeout).build());
+                    msg(player, "soyslinkteam.team.disband.confirm", team.getName(), timeout);
+                    msg(player, "soyslinkteam.general.confirm-required", timeout);
                     return;
                 }
                 confirmations.remove(player.getUniqueId());
@@ -64,17 +61,17 @@ public class DisbandSub extends SubCommand {
 
             if (!plugin.getTeamManager().disbandTeam(team, player)) {
                 // 被 TeamDisbandEvent 监听器取消
-                msg(player, "event.cancelled", Placeholders.of("reason", "").build());
+                msg(player, "soyslinkteam.event.cancelled", "");
                 return;
             }
 
             // 先广播再清理邀请，保证成员列表仍完整
-            team.broadcast(plugin.getMessageManager().get("team.disband.broadcast", Placeholders
-                    .of("team", teamName).and("player", player.getName()).build()));
+            team.broadcast(plugin.getMessageManager().get("soyslinkteam.team.disband.broadcast",
+                    teamName, player.getName()));
 
             plugin.getInviteManager().removeByTeam(team.getId());
 
-            msg(player, "team.disband.success", Placeholders.of("team", teamName).build());
+            msg(player, "soyslinkteam.team.disband.success", teamName);
         });
     }
 

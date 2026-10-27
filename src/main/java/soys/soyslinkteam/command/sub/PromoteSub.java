@@ -9,7 +9,6 @@ import soys.soyslinkteam.permission.TeamAction;
 import soys.soyslinkteam.team.Team;
 import soys.soyslinkteam.team.TeamMember;
 import soys.soyslinkteam.team.TeamRole;
-import soys.soyslinkteam.util.Placeholders;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,7 +39,7 @@ public class PromoteSub extends SubCommand {
         Player player = (Player) sender;
 
         if (args.length < 1) {
-            msg(player, "member.promote.usage", Placeholders.of("label", label).build());
+            msg(player, "soyslinkteam.member.promote.usage", label);
             return;
         }
 
@@ -52,21 +51,18 @@ public class PromoteSub extends SubCommand {
             String targetName = args[0];
             TeamMember target = team.getMemberByName(targetName);
             if (target == null) {
-                msg(player, "team.target-not-in-your-team",
-                        Placeholders.of("player", targetName).build());
+                msg(player, "soyslinkteam.team.target-not-in-your-team", targetName);
                 return;
             }
 
             if (target.getRole() == TeamRole.ADMIN) {
-                msg(player, "member.promote.already-admin",
-                        Placeholders.of("player", target.getName()).build());
+                msg(player, "soyslinkteam.member.promote.already-admin", target.getName());
                 return;
             }
 
             int limit = plugin.getConfigManager().getMaxTeamAdmins();
             if (limit > 0 && team.countRole(TeamRole.ADMIN) >= limit) {
-                msg(player, "member.promote.limit-reached",
-                        Placeholders.of("max", limit).build());
+                msg(player, "soyslinkteam.member.promote.limit-reached", limit);
                 return;
             }
 
@@ -78,13 +74,11 @@ public class PromoteSub extends SubCommand {
             team.setRole(target.getUuid(), TeamRole.ADMIN);
             plugin.getTeamManager().save(team);
 
-            msg(player, "member.promote.success",
-                    Placeholders.of("player", target.getName()).build());
+            msg(player, "soyslinkteam.member.promote.success", target.getName());
 
             Player promoted = target.getPlayer();
             if (promoted != null && promoted.isOnline()) {
-                msg(promoted, "member.promote.received",
-                        Placeholders.of("team", team.getName()).build());
+                msg(promoted, "soyslinkteam.member.promote.received", team.getName());
             }
         });
     }

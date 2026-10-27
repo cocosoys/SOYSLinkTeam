@@ -2,6 +2,7 @@ package soys.soyslinkteam.storage;
 
 import soys.soyslinkteam.team.Team;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -103,6 +104,15 @@ public interface DataStorage {
      * 清空全部数据。仅由迁移覆盖流程调用。
      */
     void clear() throws Exception;
+
+    /**
+     * 把当前全量数据导出为 YAML 快照文件（定时 / 手动备份使用）。
+     * <p>快照格式与 {@code YamlStorage} 数据文件一致，可通过 YAML 后端直接读回。</p>
+     *
+     * @param file 目标文件（调用方负责目录存在）
+     * @throws Exception 导出失败
+     */
+    void snapshotTo(File file) throws Exception;
 
     /**
      * 已存在的队伍名集合（小写），用于重名校验。

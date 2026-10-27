@@ -1,5 +1,6 @@
 package soys.soyslinkteam.storage;
 
+import org.bukkit.scheduler.BukkitTask;
 import soys.soyslinkteam.SOYSLinkTeam;
 import soys.soyslinkteam.storage.impl.MysqlStorage;
 import soys.soyslinkteam.storage.impl.SqlStorage;
@@ -7,10 +8,14 @@ import soys.soyslinkteam.storage.impl.SqliteStorage;
 import soys.soyslinkteam.storage.impl.YamlStorage;
 import soys.soyslinkteam.team.Team;
 
+import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +52,9 @@ public class StorageManager {
 
     /** 镜像写入线程池，与主存储写入队列隔离，避免大流量下镜像延迟 */
     private ExecutorService mirrorExecutor;
+
+    /** 定时备份任务 */
+    private BukkitTask backupTask;
 
     public StorageManager(SOYSLinkTeam plugin) {
         this.plugin = plugin;
@@ -114,6 +122,7 @@ public class StorageManager {
                 + (secondaries.isEmpty() ? "，无辅助存储" : "，辅助存储: " + describeSecondaries()));
 
         startKeepAliveTask();
+        startBackupTask();
 
         if (plugin.getConfigManager().isSyncOnStartup() && !secondaries.isEmpty()) {
             plugin.getLogger().info("正在执行启动时同步...");
@@ -136,6 +145,7 @@ public class StorageManager {
     }
 
     private void shutdownInternal(boolean awaitWrites) {
+        stopBackupTask();
         if (writeExecutor != null) {
             writeExecutor.shutdown();
             if (awaitWrites) {
@@ -207,6 +217,90 @@ public class StorageManager {
         long ticks = seconds * 20L;
         plugin.getServer().getScheduler().runTaskTimerAsynchronously(plugin,
                 () -> ((SqlStorage) mysql).keepAlive(), ticks, ticks);
+    }
+
+    // ================================================================
+    //  定时备份
+    // ================================================================
+
+    /**
+     * 启动定时备份任务（配置关闭时不做任何事）。
+     * <p>在 backup-on-save 之外，周期性把主存储全量数据导出为 YAML 快照，
+     * 并按 keep-last 保留最近若干份。</p>
+     */
+    public void startBackupTask() {
+        stopBackupTask();
+        if (!plugin.getConfigManager().isBackupEnabled()) {
+            return;
+        }
+        long ticks = plugin.getConfigManager().getBackupIntervalTicks();
+        if (ticks <= 0) {
+            return;
+        }
+        this.backupTask = plugin.getServer().getScheduler().runTaskTimerAsynchronously(
+                plugin, this::createBackup, ticks, ticks);
+        plugin.getLogger().info("定时备份已启用: 每 " + (ticks / 20 / 60)
+                + " 分钟一次，保留最近 " + plugin.getConfigManager().getBackupKeepLast() + " 份。");
+    }
+
+    /** 停止定时备份任务。 */
+    public void stopBackupTask() {
+        if (backupTask != null) {
+            backupTask.cancel();
+            backupTask = null;
+        }
+    }
+
+    /**
+     * 立即生成一次全量 YAML 快照备份（手动 / 定时共用）。
+     *
+     * @return 备份文件；主存储不可用或失败时返回 null
+     */
+    public File createBackup() {
+        DataStorage storage = primary;
+        if (storage == null) {
+            return null;
+        }
+        try {
+            File directory = new File(plugin.getDataFolder(),
+                    plugin.getConfigManager().getBackupDirectory());
+            if (!directory.exists() && !directory.mkdirs()) {
+                plugin.getLogger().warning("创建备份目录失败: " + directory.getAbsolutePath());
+                return null;
+            }
+            String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+            File target = new File(directory,
+                    storage.getType().getId() + "_" + timestamp + ".yml");
+            storage.snapshotTo(target);
+            pruneBackups(directory);
+            debug("已创建备份快照: " + target.getName());
+            return target;
+        } catch (Exception e) {
+            plugin.getLogger().log(Level.WARNING, "创建备份快照失败: " + e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
+     * 清理超出保留数量的旧快照（仅匹配本插件生成的命名，避免误删用户文件）。
+     */
+    private void pruneBackups(File directory) {
+        int keepLast = plugin.getConfigManager().getBackupKeepLast();
+        File[] files = directory.listFiles((dir, name)
+                -> name.matches("(yaml|sqlite|mysql)_\\d{8}_\\d{6}\\.yml"));
+        if (files == null || files.length <= keepLast) {
+            return;
+        }
+        // 按修改时间降序，保留最新的 keepLast 份
+        Arrays.sort(files, Comparator.comparingLong(File::lastModified).reversed());
+        for (int i = keepLast; i < files.length; i++) {
+            File outdated = files[i];
+            if (!outdated.delete()) {
+                plugin.getLogger().warning("清理旧备份失败: " + outdated.getName());
+            } else {
+                debug("已清理旧备份: " + outdated.getName());
+            }
+        }
     }
 
     // ================================================================
@@ -432,6 +526,18 @@ public class StorageManager {
     //  迁移与同步
     // ================================================================
 
+    /** 迁移每批写入的队伍数量，用于进度反馈与事务分片 */
+    private static final int MIGRATE_BATCH_SIZE = 100;
+
+    /** 迁移进度回调（在存储线程上调用，实现方需自行切主线程再操作 UI）。 */
+    public interface MigrateProgress {
+        /**
+         * @param done  已处理的队伍数量
+         * @param total 总队伍数量
+         */
+        void onProgress(int done, int total);
+    }
+
     /**
      * 在两个后端之间迁移数据。
      *
@@ -442,6 +548,21 @@ public class StorageManager {
      * @throws Exception 任一步骤失败
      */
     public int migrate(StorageType from, StorageType to, boolean overwrite) throws Exception {
+        return migrate(from, to, overwrite, null);
+    }
+
+    /**
+     * 在两个后端之间迁移数据（分批写入 + 进度回调）。
+     *
+     * @param from      来源后端
+     * @param to        目标后端
+     * @param overwrite true 表示先清空目标后端
+     * @param progress  进度回调，可为 null
+     * @return 迁移的队伍数量
+     * @throws Exception 任一步骤失败
+     */
+    public int migrate(StorageType from, StorageType to, boolean overwrite,
+                       MigrateProgress progress) throws Exception {
         DataStorage source = storages.get(from);
         DataStorage target = storages.get(to);
         if (source == null) {
@@ -454,8 +575,27 @@ public class StorageManager {
         if (overwrite) {
             target.clear();
         }
-        target.saveTeams(teams);
-        return teams.size();
+        int total = teams.size();
+        int processed = 0;
+        List<Team> batch = new ArrayList<>();
+        for (Team team : teams) {
+            batch.add(team);
+            processed++;
+            if (batch.size() >= MIGRATE_BATCH_SIZE) {
+                target.saveTeams(batch);
+                batch.clear();
+                if (progress != null) {
+                    progress.onProgress(processed, total);
+                }
+            }
+        }
+        if (!batch.isEmpty()) {
+            target.saveTeams(batch);
+        }
+        if (progress != null) {
+            progress.onProgress(processed, total);
+        }
+        return processed;
     }
 
     /**
@@ -481,6 +621,130 @@ public class StorageManager {
             }
         }
         return teams.size();
+    }
+
+    // ================================================================
+    //  一致性检查
+    // ================================================================
+
+    /** 单个辅助存储与主存储的差异明细。 */
+    public static class SecondaryDiff {
+        private final StorageType type;
+        private final int count;
+        private final List<String> missing = new ArrayList<>();
+        private final List<String> extra = new ArrayList<>();
+
+        SecondaryDiff(StorageType type, int count) {
+            this.type = type;
+            this.count = count;
+        }
+
+        public StorageType getType() {
+            return type;
+        }
+
+        /** 辅助存储中的队伍总数。 */
+        public int getCount() {
+            return count;
+        }
+
+        /** 主存储有、辅助存储缺失的队伍名（最多保留前 10 个）。 */
+        public List<String> getMissing() {
+            return missing;
+        }
+
+        /** 辅助存储有、主存储没有的队伍名（最多保留前 10 个）。 */
+        public List<String> getExtra() {
+            return extra;
+        }
+
+        public boolean isConsistent() {
+            return missing.isEmpty() && extra.isEmpty();
+        }
+    }
+
+    /** 主辅存储一致性检查报告。 */
+    public static class ConsistencyReport {
+        public enum Status {
+            /** 全部一致 */
+            CONSISTENT,
+            /** 存在差异 */
+            INCONSISTENT,
+            /** 没有辅助存储，未执行检查 */
+            NO_SECONDARY
+        }
+
+        private Status status = Status.NO_SECONDARY;
+        private int primaryCount;
+        private final List<SecondaryDiff> diffs = new ArrayList<>();
+
+        public Status getStatus() {
+            return status;
+        }
+
+        public int getPrimaryCount() {
+            return primaryCount;
+        }
+
+        public List<SecondaryDiff> getDiffs() {
+            return diffs;
+        }
+    }
+
+    /**
+     * 校验主存储与所有辅助存储的一致性（diff 队伍数量与 ID 集合）。
+     *
+     * @return 检查报告
+     * @throws IllegalStateException 主存储不可用
+     * @throws Exception             读取任一端点失败
+     */
+    public ConsistencyReport checkConsistency() throws Exception {
+        if (primary == null) {
+            throw new IllegalStateException("主存储不可用");
+        }
+        ConsistencyReport report = new ConsistencyReport();
+        Map<UUID, String> primaryNames = primary.loadTeamNames();
+        report.primaryCount = primaryNames.size();
+        if (secondaries.isEmpty()) {
+            report.status = ConsistencyReport.Status.NO_SECONDARY;
+            return report;
+        }
+        boolean consistent = true;
+        for (DataStorage secondary : secondaries) {
+            if (!secondary.isAvailable()) {
+                continue;
+            }
+            Map<UUID, String> secondaryNames = secondary.loadTeamNames();
+            SecondaryDiff diff = new SecondaryDiff(secondary.getType(), secondaryNames.size());
+            for (Map.Entry<UUID, String> entry : primaryNames.entrySet()) {
+                if (!secondaryNames.containsKey(entry.getKey())) {
+                    if (diff.missing.size() < 10) {
+                        diff.missing.add(entry.getValue());
+                    } else {
+                        diff.missing.add("...");
+                        break;
+                    }
+                }
+            }
+            for (Map.Entry<UUID, String> entry : secondaryNames.entrySet()) {
+                if (!primaryNames.containsKey(entry.getKey())) {
+                    if (diff.extra.size() < 10) {
+                        diff.extra.add(entry.getValue());
+                    } else {
+                        diff.extra.add("...");
+                        break;
+                    }
+                }
+            }
+            report.diffs.add(diff);
+            if (!diff.isConsistent()) {
+                consistent = false;
+            }
+        }
+        report.status = consistent
+                ? ConsistencyReport.Status.CONSISTENT
+                : ConsistencyReport.Status.INCONSISTENT;
+        return report;
     }
 
     private void debug(String message) {

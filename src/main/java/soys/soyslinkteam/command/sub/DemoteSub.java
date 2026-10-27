@@ -9,7 +9,6 @@ import soys.soyslinkteam.permission.TeamAction;
 import soys.soyslinkteam.team.Team;
 import soys.soyslinkteam.team.TeamMember;
 import soys.soyslinkteam.team.TeamRole;
-import soys.soyslinkteam.util.Placeholders;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,7 +39,7 @@ public class DemoteSub extends SubCommand {
         Player player = (Player) sender;
 
         if (args.length < 1) {
-            msg(player, "member.demote.usage", Placeholders.of("label", label).build());
+            msg(player, "soyslinkteam.member.demote.usage", label);
             return;
         }
 
@@ -52,14 +51,12 @@ public class DemoteSub extends SubCommand {
             String targetName = args[0];
             TeamMember target = team.getMemberByName(targetName);
             if (target == null) {
-                msg(player, "team.target-not-in-your-team",
-                        Placeholders.of("player", targetName).build());
+                msg(player, "soyslinkteam.team.target-not-in-your-team", targetName);
                 return;
             }
 
             if (target.getRole() != TeamRole.ADMIN) {
-                msg(player, "member.demote.not-admin",
-                        Placeholders.of("player", target.getName()).build());
+                msg(player, "soyslinkteam.member.demote.not-admin", target.getName());
                 return;
             }
 
@@ -71,13 +68,11 @@ public class DemoteSub extends SubCommand {
             team.setRole(target.getUuid(), TeamRole.MEMBER);
             plugin.getTeamManager().save(team);
 
-            msg(player, "member.demote.success",
-                    Placeholders.of("player", target.getName()).build());
+            msg(player, "soyslinkteam.member.demote.success", target.getName());
 
             Player demoted = target.getPlayer();
             if (demoted != null && demoted.isOnline()) {
-                msg(demoted, "member.demote.received",
-                        Placeholders.of("team", team.getName()).build());
+                msg(demoted, "soyslinkteam.member.demote.received", team.getName());
             }
         });
     }

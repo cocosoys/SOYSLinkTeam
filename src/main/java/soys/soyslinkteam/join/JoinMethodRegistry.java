@@ -7,10 +7,10 @@ import soys.soyslinkteam.join.impl.InviteJoinMethod;
 import soys.soyslinkteam.join.impl.PasswordJoinMethod;
 import soys.soyslinkteam.join.impl.PublicJoinMethod;
 import soys.soyslinkteam.join.impl.EconomyJoinMethod;
+import soys.soyslinkteam.join.impl.ItemJoinMethod;
 import soys.soyslinkteam.team.Team;
 import soys.soyslinkteam.team.TeamRole;
 import soys.soyslinkteam.util.CooldownManager;
-import soys.soyslinkteam.util.Placeholders;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -56,6 +56,7 @@ public class JoinMethodRegistry {
         register(new PublicJoinMethod(plugin));
         register(new PasswordJoinMethod(plugin));
         register(new EconomyJoinMethod(plugin));
+        register(new ItemJoinMethod(plugin));
 
         // 检查 max-teams-per-player 配置：当前版本数据模型固定为1队
         int maxTeams = plugin.getConfigManager().getMaxTeamsPerPlayer();
@@ -166,15 +167,15 @@ public class JoinMethodRegistry {
                 break;
             }
             if (matched == null) {
-                return JoinResult.denied("join.no-method-available",
-                        Placeholders.of("team", team.getName()).build());
+                return JoinResult.denied("soyslinkteam.join.no-method-available",
+                        team.getName());
             }
         }
 
         // ---------- 执行实际入队 ----------
         boolean joined = performJoin(context, matched);
         return joined ? JoinResult.success()
-                : JoinResult.denied("event.cancelled", Placeholders.of("reason", "").build());
+                : JoinResult.denied("soyslinkteam.event.cancelled", "");
     }
 
     /**
@@ -190,24 +191,21 @@ public class JoinMethodRegistry {
         int maxTeams = plugin.getConfigManager().getMaxTeamsPerPlayer();
         int currentTeams = plugin.getTeamManager().hasTeam(context.getPlayer().getUniqueId()) ? 1 : 0;
         if (currentTeams >= Math.min(maxTeams, 1)) {
-            return JoinResult.denied("team.already-in-team",
-                    Placeholders.of("team", currentTeamName(context)).build());
+            return JoinResult.denied("soyslinkteam.team.already-in-team",
+                    currentTeamName(context));
         }
 
         if (!plugin.getPermissionManager().canBypass(context.getPlayer())) {
             int remaining = plugin.getCooldownManager()
                     .getRemaining(CooldownManager.REJOIN, context.getPlayer().getUniqueId());
             if (remaining > 0) {
-                return JoinResult.denied("member.rejoin-cooldown",
-                        Placeholders.of("seconds", remaining).build());
+                return JoinResult.denied("soyslinkteam.member.rejoin-cooldown", remaining);
             }
 
             if (plugin.getTeamManager().isFull(team)) {
-                return JoinResult.denied("team.team-full", Placeholders
-                        .of("team", team.getName())
-                        .and("size", team.getSize())
-                        .and("max", plugin.getTeamManager().getMaxSize(team))
-                        .build());
+                return JoinResult.denied("soyslinkteam.team.team-full",
+                        team.getName(), team.getSize(),
+                        plugin.getTeamManager().getMaxSize(team));
             }
         }
 
@@ -254,24 +252,21 @@ public class JoinMethodRegistry {
         }
 
         // 向队伍广播
-        Map<String, String> placeholders = Placeholders
-                .of("player", context.getPlayer().getName())
-                .and("team", team.getName())
-                .and("size", team.getSize())
-                .and("max", plugin.getTeamManager().getMaxSize(team))
-                .build();
-        team.broadcast(plugin.getMessageManager().get("member.join-broadcast", placeholders),
+        team.broadcast(plugin.getMessageManager().get("soyslinkteam.member.join-broadcast",
+                        context.getPlayer().getName(), team.getSize(),
+                        plugin.getTeamManager().getMaxSize(team)),
                 context.getPlayer().getUniqueId());
 
         // 向入队者反馈
-        plugin.getMessageManager().send(context.getPlayer(), "join.success", placeholders);
+        plugin.getMessageManager().send(context.getPlayer(), "soyslinkteam.join.success",
+                team.getName());
 
         // 推送队伍公告
         if (plugin.getConfigManager().isNoticeEnabled()
                 && plugin.getConfigManager().isNoticeShowOnJoin()
                 && team.getSettings().hasNotice()) {
-            plugin.getMessageManager().send(context.getPlayer(), "settings.notice.on-join",
-                    Placeholders.of("notice", team.getSettings().getNotice()).build());
+            plugin.getMessageManager().send(context.getPlayer(), "soyslinkteam.settings.notice.on-join",
+                    team.getSettings().getNotice());
         }
         return true;
     }

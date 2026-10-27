@@ -5,7 +5,6 @@ import org.bukkit.command.CommandSender;
 import soys.soyslinkteam.SOYSLinkTeam;
 import soys.soyslinkteam.command.SubCommand;
 import soys.soyslinkteam.storage.StorageType;
-import soys.soyslinkteam.util.Placeholders;
 
 import java.util.Arrays;
 import java.util.List;
@@ -37,7 +36,7 @@ public class AdminMigrateSub extends SubCommand {
     @Override
     public void execute(CommandSender sender, String label, String[] args) {
         if (args.length < 2) {
-            msg(sender, "admin.migrate.usage", Placeholders.of("label", label).build());
+            msg(sender, "soyslinkteam.admin.migrate.usage", label);
             return;
         }
 
@@ -49,51 +48,67 @@ public class AdminMigrateSub extends SubCommand {
         StorageType to = StorageType.fromId(toArg);
 
         if (from == null || to == null) {
-            msg(sender, "admin.migrate.unknown-type",
-                    Placeholders.of("type", from == null ? fromArg : toArg).build());
+            msg(sender, "soyslinkteam.admin.migrate.unknown-type",
+                    from == null ? fromArg : toArg);
             return;
         }
         if (from == to) {
-            msg(sender, "admin.migrate.same-type", null);
+            msg(sender, "soyslinkteam.admin.migrate.same-type");
             return;
         }
         if (!plugin.getStorageManager().isEnabled(from)) {
-            msg(sender, "admin.migrate.not-enabled",
-                    Placeholders.of("type", from.getDisplayName()).build());
+            msg(sender, "soyslinkteam.admin.migrate.not-enabled", from.getDisplayName());
             return;
         }
         if (!plugin.getStorageManager().isEnabled(to)) {
-            msg(sender, "admin.migrate.not-enabled",
-                    Placeholders.of("type", to.getDisplayName()).build());
+            msg(sender, "soyslinkteam.admin.migrate.not-enabled", to.getDisplayName());
             return;
         }
         if (!overwrite) {
-            msg(sender, "admin.migrate.warn-overwrite",
-                    Placeholders.of("to", to.getDisplayName()).build());
+            msg(sender, "soyslinkteam.admin.migrate.warn-overwrite", to.getDisplayName());
             return;
         }
 
-        msg(sender, "admin.migrate.started",
-                Placeholders.of("from", from.getDisplayName()).and("to", to.getDisplayName()).build());
+        msg(sender, "soyslinkteam.admin.migrate.started",
+                from.getDisplayName(), to.getDisplayName());
 
         final StorageType fFrom = from;
         final StorageType fTo = to;
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
                 long start = System.currentTimeMillis();
-                int count = plugin.getStorageManager().migrate(fFrom, fTo, true);
+                // 进度节流：每 500 支或收尾时反馈一次，避免大迁移时刷屏
+                final int[] lastReported = {0};
+                int count = plugin.getStorageManager().migrate(fFrom, fTo, true, (done, total) -> {
+                    if (done != total && done - lastReported[0] < 500) {
+                        return;
+                    }
+                    lastReported[0] = done;
+                    int percent = total > 0 ? (int) Math.round(done * 100.0 / total) : 100;
+                    Bukkit.getScheduler().runTask(plugin, () -> msg(sender, "soyslinkteam.admin.migrate.progress",
+                            percent, done, total, renderBar(done, total)));
+                });
                 long ms = System.currentTimeMillis() - start;
-                Bukkit.getScheduler().runTask(plugin, () -> msg(sender, "admin.migrate.success",
-                        Placeholders.of("from", fFrom.getDisplayName())
-                                .and("to", fTo.getDisplayName())
-                                .and("count", count)
-                                .and("ms", ms).build()));
+                Bukkit.getScheduler().runTask(plugin, () -> msg(sender, "soyslinkteam.admin.migrate.success",
+                        count, fFrom.getDisplayName(), fTo.getDisplayName(), ms));
             } catch (Exception e) {
-                Bukkit.getScheduler().runTask(plugin, () -> msg(sender, "admin.migrate.failed",
-                        Placeholders.of("error",
-                                e.getMessage() == null ? "未知错误" : e.getMessage()).build()));
+                Bukkit.getScheduler().runTask(plugin, () -> msg(sender, "soyslinkteam.admin.migrate.failed",
+                        e.getMessage() == null ? "未知错误" : e.getMessage()));
                 plugin.getLogger().log(java.util.logging.Level.SEVERE, "迁移失败", e);
             }
         });
+    }
+
+    /** 渲染 10 段进度条。 */
+    private String renderBar(int done, int total) {
+        int segments = 10;
+        int filled = total <= 0 ? segments
+                : (int) Math.round(done * (double) segments / total);
+        filled = Math.max(0, Math.min(segments, filled));
+        StringBuilder builder = new StringBuilder("&a");
+        for (int i = 0; i < segments; i++) {
+            builder.append(i < filled ? "■" : "□");
+        }
+        return builder.append("&r").toString();
     }
 }

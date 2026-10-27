@@ -203,6 +203,17 @@ join:
       #       玩家加入时自动扣除。设置为 0 或 off 可清除费用。
       #       管理员（soyslinkteam.admin.bypass）可免费用。
 
+    # ---------- 物品 / 点券消耗加入 ----------
+    item:
+      enabled: false
+      order: 50
+      # 单队最多可设置的消耗物品种类数，0 = 不限制
+      max-items: 5
+      # 说明：队长通过 /steam set itemcost <MATERIAL:AMOUNT> [...] | off 设置本队入队所需物品，
+      #       玩家加入时背包需具备全部物品，入队成功后自动扣减。
+      #       物品名支持原版/模组材质（如 DIAMOND、minecraft:emerald、botania:manaPearl）。
+      #       管理员（soyslinkteam.admin.bypass）可免消耗。
+
 
 # ============================================================================
 #  权限体系
@@ -258,6 +269,8 @@ permission:
       - SET_PUBLIC
       - SET_PASSWORD
       - SET_COST
+      - SET_ITEMCOST
+      - APPROVE
       - VIEW_INFO
       - LEAVE
     MEMBER:

@@ -2,8 +2,6 @@ package soys.soyslinkteam.util;
 
 import soys.soyslinkteam.SOYSLinkTeam;
 
-import java.util.Collections;
-import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -11,6 +9,7 @@ import java.util.regex.PatternSyntaxException;
 /**
  * 队伍名称与简称校验器。
  * <p>被 create 与 set 指令共用，保证校验规则单点维护。</p>
+ * <p>校验失败消息采用位置参数 {@code {0} {1} ...}，与语言文件顺序一致。</p>
  */
 public final class NameValidator {
 
@@ -27,21 +26,20 @@ public final class NameValidator {
 
         private final boolean valid;
         private final String messageKey;
-        private final Map<String, String> placeholders;
+        private final Object[] args;
 
-        private Result(boolean valid, String messageKey, Map<String, String> placeholders) {
+        private Result(boolean valid, String messageKey, Object[] args) {
             this.valid = valid;
             this.messageKey = messageKey;
-            this.placeholders = placeholders == null
-                    ? Collections.<String, String>emptyMap() : placeholders;
+            this.args = args == null ? new Object[0] : args;
         }
 
         public static Result ok() {
             return new Result(true, null, null);
         }
 
-        public static Result fail(String messageKey, Map<String, String> placeholders) {
-            return new Result(false, messageKey, placeholders);
+        public static Result fail(String messageKey, Object... args) {
+            return new Result(false, messageKey, args);
         }
 
         public boolean isValid() {
@@ -52,8 +50,8 @@ public final class NameValidator {
             return messageKey;
         }
 
-        public Map<String, String> getPlaceholders() {
-            return placeholders;
+        public Object[] getArgs() {
+            return args;
         }
     }
 
@@ -65,40 +63,36 @@ public final class NameValidator {
      */
     public Result validateTeamName(String name, UUID excluding) {
         if (name == null || name.isEmpty()) {
-            return Result.fail("team.create.name-too-short",
-                    Placeholders.of("min", plugin.getConfigManager().getNameMinLength()).build());
+            return Result.fail("soyslinkteam.team.create.name-too-short",
+                    plugin.getConfigManager().getNameMinLength());
         }
 
         int min = plugin.getConfigManager().getNameMinLength();
         int max = plugin.getConfigManager().getNameMaxLength();
 
         if (name.length() < min) {
-            return Result.fail("team.create.name-too-short",
-                    Placeholders.of("min", min).build());
+            return Result.fail("soyslinkteam.team.create.name-too-short", min);
         }
         if (name.length() > max) {
-            return Result.fail("team.create.name-too-long",
-                    Placeholders.of("max", max).build());
+            return Result.fail("soyslinkteam.team.create.name-too-long", max);
         }
 
         String pattern = plugin.getConfigManager().getNamePattern();
         if (!matches(pattern, name)) {
-            return Result.fail("team.create.name-invalid", Collections.<String, String>emptyMap());
+            return Result.fail("soyslinkteam.team.create.name-invalid");
         }
 
         String lower = name.toLowerCase();
         for (String word : plugin.getConfigManager().getNameBlacklist()) {
             if (word != null && !word.isEmpty() && lower.contains(word.toLowerCase())) {
-                return Result.fail("team.create.name-blacklisted",
-                        Collections.<String, String>emptyMap());
+                return Result.fail("soyslinkteam.team.create.name-blacklisted");
             }
         }
 
         if (!plugin.getConfigManager().isAllowDuplicateName()) {
             UUID existing = plugin.getTeamManager().getTeamIdByName(name);
             if (existing != null && !existing.equals(excluding)) {
-                return Result.fail("team.create.name-duplicate",
-                        Placeholders.of("team", name).build());
+                return Result.fail("soyslinkteam.team.create.name-duplicate", name);
             }
         }
 
@@ -113,13 +107,13 @@ public final class NameValidator {
         int max = plugin.getConfigManager().getTagMaxLength();
 
         if (tag == null || tag.length() < min) {
-            return Result.fail("settings.tag.too-short", Placeholders.of("min", min).build());
+            return Result.fail("soyslinkteam.settings.tag.too-short", min);
         }
         if (tag.length() > max) {
-            return Result.fail("settings.tag.too-long", Placeholders.of("max", max).build());
+            return Result.fail("soyslinkteam.settings.tag.too-long", max);
         }
         if (!matches(plugin.getConfigManager().getTagPattern(), tag)) {
-            return Result.fail("settings.tag.invalid", Collections.<String, String>emptyMap());
+            return Result.fail("soyslinkteam.settings.tag.invalid");
         }
         return Result.ok();
     }

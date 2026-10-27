@@ -1,6 +1,7 @@
 package soys.soyslinkteam.web;
 
 import com.github.cocosoys.mc.soyshttpovermc.annotations.ApiName;
+import com.github.cocosoys.mc.soyshttpovermc.annotations.ApiPublic;
 import com.github.cocosoys.mc.soyshttpovermc.annotations.GetMapping;
 import com.github.cocosoys.mc.soyshttpovermc.annotations.PostMapping;
 import com.github.cocosoys.mc.soyshttpovermc.annotations.RequestBody;
@@ -33,8 +34,14 @@ import java.util.concurrent.TimeUnit;
  *
  * <p>覆盖：我的信息、我的队伍、浏览队伍、申请 / 加入 / 离开、队伍聊天。
  * 仅需登录（框架 401 底线），所有 Bukkit 写操作切回主线程执行。</p>
+ *
+ * <p><b>@ApiPublic 说明</b>：网关的 auth 策略已保护 {@code /api/*}（无凭证 401），
+ * 此处类级标注仅用于解除注册表的「默认拒绝」——当宿主导入了 PermissionService 时，
+ * 既无 {@code @ApiPermission} 又无 {@code @ApiPublic} 的端点会被判 403。
+ * 本类端点的语义是「已登录玩家即可访问」，故整类标注 @ApiPublic 而非逐个授权节点。</p>
  */
 @ApiName("队伍用户端")
+@ApiPublic
 public class TeamUserApi {
 
     private final WebIntegration integration;
@@ -174,7 +181,7 @@ public class TeamUserApi {
             return AjaxResult.success("已加入 " + team.getName());
         }
         String text = result.getMessageKey() == null ? "无法加入该队伍"
-                : plugin().getMessageManager().get(result.getMessageKey(), result.getPlaceholders());
+                : plugin().getMessageManager().get(result.getMessageKey(), result.getArgs());
         return AjaxResult.error(Text.strip(text));
     }
 

@@ -1,5 +1,6 @@
 package soys.soyslinkteam.command.sub;
 
+import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import soys.soyslinkteam.SOYSLinkTeam;
@@ -10,7 +11,6 @@ import soys.soyslinkteam.permission.TeamAction;
 import soys.soyslinkteam.team.Team;
 import soys.soyslinkteam.util.NameValidator;
 import soys.soyslinkteam.util.PasswordUtil;
-import soys.soyslinkteam.util.Placeholders;
 import soys.soyslinkteam.util.Text;
 
 import java.util.ArrayList;
@@ -41,7 +41,7 @@ public class SetSub extends SubCommand {
     @Override
     public List<String> tabComplete(CommandSender sender, String[] args) {
         if (args.length == 1) {
-            return filter(Arrays.asList("name", "tag", "notice", "public", "password", "cost"), args[0]);
+            return filter(Arrays.asList("name", "tag", "notice", "public", "password", "cost", "itemcost"), args[0]);
         }
         if (args.length == 2) {
             String key = args[0].toLowerCase();
@@ -63,7 +63,7 @@ public class SetSub extends SubCommand {
         Player player = (Player) sender;
 
         if (args.length < 1) {
-            msgList(player, "settings.usage", Placeholders.of("label", label).build());
+            msgList(player, "soyslinkteam.settings.usage", label);
             return;
         }
 
@@ -90,8 +90,11 @@ public class SetSub extends SubCommand {
                 case "cost":
                     setCost(player, team, label, joined);
                     break;
+                case "itemcost":
+                    setItemCost(player, team, label, args);
+                    break;
                 default:
-                    msgList(player, "settings.usage", Placeholders.of("label", label).build());
+                    msgList(player, "soyslinkteam.settings.usage", label);
             }
         });
     }
@@ -101,12 +104,12 @@ public class SetSub extends SubCommand {
             return;
         }
         if (value.isEmpty()) {
-            msgList(player, "settings.usage", Placeholders.of("label", label).build());
+            msgList(player, "soyslinkteam.settings.usage", label);
             return;
         }
         NameValidator.Result result = plugin.getNameValidator().validateTeamName(value, team.getId());
         if (!result.isValid()) {
-            msg(player, result.getMessageKey(), result.getPlaceholders());
+            msg(player, result.getMessageKey(), result.getArgs());
             return;
         }
         TeamRenameEvent renameEvent = new TeamRenameEvent(team, team.getName(), value, player);
@@ -114,9 +117,9 @@ public class SetSub extends SubCommand {
             return;
         }
         plugin.getTeamManager().renameTeam(team, value);
-        msg(player, "settings.name.success", Placeholders.of("name", value).build());
-        team.broadcast(plugin.getMessageManager().get("settings.name.broadcast",
-                Placeholders.of("player", player.getName()).and("name", value).build()));
+        msg(player, "soyslinkteam.settings.name.success", value);
+        team.broadcast(plugin.getMessageManager().get("soyslinkteam.settings.name.broadcast",
+                player.getName(), value));
     }
 
     private void setTag(Player player, Team team, String label, String value) {
@@ -124,7 +127,7 @@ public class SetSub extends SubCommand {
             return;
         }
         if (!plugin.getConfigManager().isTagEnabled()) {
-            msg(player, "settings.tag.disabled", null);
+            msg(player, "soyslinkteam.settings.tag.disabled");
             return;
         }
         if (value.isEmpty()) {
@@ -135,13 +138,13 @@ public class SetSub extends SubCommand {
             }
             team.getSettings().setTag("");
             plugin.getTeamManager().save(team);
-            msg(player, "settings.tag.success",
-                    Placeholders.of("tag", plugin.getConfigManager().getTagFallback()).build());
+            msg(player, "soyslinkteam.settings.tag.success",
+                    plugin.getConfigManager().getTagFallback());
             return;
         }
         NameValidator.Result result = plugin.getNameValidator().validateTag(value);
         if (!result.isValid()) {
-            msg(player, result.getMessageKey(), result.getPlaceholders());
+            msg(player, result.getMessageKey(), result.getArgs());
             return;
         }
         TeamSettingChangeEvent tagEvent = new TeamSettingChangeEvent(team,
@@ -151,7 +154,7 @@ public class SetSub extends SubCommand {
         }
         team.getSettings().setTag(value);
         plugin.getTeamManager().save(team);
-        msg(player, "settings.tag.success", Placeholders.of("tag", value).build());
+        msg(player, "soyslinkteam.settings.tag.success", value);
     }
 
     private void setNotice(Player player, Team team, String label, String value) {
@@ -159,7 +162,7 @@ public class SetSub extends SubCommand {
             return;
         }
         if (!plugin.getConfigManager().isNoticeEnabled()) {
-            msg(player, "settings.notice.disabled", null);
+            msg(player, "soyslinkteam.settings.notice.disabled");
             return;
         }
         int max = plugin.getConfigManager().getNoticeMaxLength();
@@ -171,11 +174,11 @@ public class SetSub extends SubCommand {
             }
             team.getSettings().setNotice("");
             plugin.getTeamManager().save(team);
-            msg(player, "settings.notice.cleared", null);
+            msg(player, "soyslinkteam.settings.notice.cleared");
             return;
         }
         if (value.length() > max) {
-            msg(player, "settings.notice.too-long", Placeholders.of("max", max).build());
+            msg(player, "soyslinkteam.settings.notice.too-long", max);
             return;
         }
         TeamSettingChangeEvent noticeEvent = new TeamSettingChangeEvent(team,
@@ -185,9 +188,9 @@ public class SetSub extends SubCommand {
         }
         team.getSettings().setNotice(value);
         plugin.getTeamManager().save(team);
-        msg(player, "settings.notice.success", null);
-        team.broadcast(plugin.getMessageManager().get("settings.notice.broadcast",
-                Placeholders.of("notice", value).build()));
+        msg(player, "soyslinkteam.settings.notice.success");
+        team.broadcast(plugin.getMessageManager().get("soyslinkteam.settings.notice.broadcast",
+                value));
     }
 
     private void setPublic(Player player, Team team, String label, String value) {
@@ -195,12 +198,12 @@ public class SetSub extends SubCommand {
             return;
         }
         if (!plugin.getConfigManager().isJoinMethodEnabled("public")) {
-            msg(player, "settings.public.method-disabled", null);
+            msg(player, "soyslinkteam.settings.public.method-disabled");
             return;
         }
         Boolean open = parseBoolean(value);
         if (open == null) {
-            msgList(player, "settings.usage", Placeholders.of("label", label).build());
+            msgList(player, "soyslinkteam.settings.usage", label);
             return;
         }
         TeamSettingChangeEvent pubEvent = new TeamSettingChangeEvent(team,
@@ -212,10 +215,9 @@ public class SetSub extends SubCommand {
         team.getSettings().setOpen(open);
         plugin.getTeamManager().save(team);
         if (open) {
-            msg(player, "settings.public.enabled",
-                    Placeholders.of("team", team.getName()).and("label", label).build());
+            msg(player, "soyslinkteam.settings.public.enabled", label, team.getName());
         } else {
-            msg(player, "settings.public.disabled", null);
+            msg(player, "soyslinkteam.settings.public.disabled");
         }
     }
 
@@ -224,7 +226,7 @@ public class SetSub extends SubCommand {
             return;
         }
         if (!plugin.getConfigManager().isJoinMethodEnabled("password")) {
-            msg(player, "settings.password.method-disabled", null);
+            msg(player, "soyslinkteam.settings.password.method-disabled");
             return;
         }
         if (value.isEmpty() || value.equalsIgnoreCase("off")) {
@@ -237,17 +239,17 @@ public class SetSub extends SubCommand {
             }
             team.getSettings().setPassword(null);
             plugin.getTeamManager().save(team);
-            msg(player, "settings.password.cleared", null);
+            msg(player, "soyslinkteam.settings.password.cleared");
             return;
         }
         int min = plugin.getConfigManager().getPasswordMinLength();
         int max = plugin.getConfigManager().getPasswordMaxLength();
         if (value.length() < min) {
-            msg(player, "settings.password.too-short", Placeholders.of("min", min).build());
+            msg(player, "soyslinkteam.settings.password.too-short", min);
             return;
         }
         if (value.length() > max) {
-            msg(player, "settings.password.too-long", Placeholders.of("max", max).build());
+            msg(player, "soyslinkteam.settings.password.too-long", max);
             return;
         }
         TeamSettingChangeEvent pwEvent = new TeamSettingChangeEvent(team,
@@ -262,7 +264,7 @@ public class SetSub extends SubCommand {
         String hashed = PasswordUtil.hash(caseSensitive ? value : value.toLowerCase());
         team.getSettings().setPassword(hashed);
         plugin.getTeamManager().save(team);
-        msg(player, "settings.password.set", Placeholders.of("password", value).build());
+        msg(player, "soyslinkteam.settings.password.set", value);
     }
 
     private void setCost(Player player, Team team, String label, String value) {
@@ -270,7 +272,7 @@ public class SetSub extends SubCommand {
             return;
         }
         if (!plugin.getConfigManager().isJoinMethodEnabled("economy")) {
-            msg(player, "settings.cost.method-disabled", null);
+            msg(player, "soyslinkteam.settings.cost.method-disabled");
             return;
         }
         if (value.isEmpty() || value.equalsIgnoreCase("off") || value.equals("0")) {
@@ -282,24 +284,23 @@ public class SetSub extends SubCommand {
             }
             team.getSettings().setEconomyCost(0);
             plugin.getTeamManager().save(team);
-            msg(player, "settings.cost.cleared", null);
+            msg(player, "soyslinkteam.settings.cost.cleared");
             return;
         }
         double cost;
         try {
             cost = Double.parseDouble(value);
         } catch (NumberFormatException e) {
-            msg(player, "settings.cost.invalid", Placeholders.of("input", value).build());
+            msg(player, "soyslinkteam.settings.cost.invalid", value);
             return;
         }
         if (cost < 0) {
-            msg(player, "settings.cost.invalid", Placeholders.of("input", value).build());
+            msg(player, "soyslinkteam.settings.cost.invalid", value);
             return;
         }
         double maxCost = plugin.getConfigManager().getEconomyMaxCost();
         if (maxCost > 0 && cost > maxCost) {
-            msg(player, "settings.cost.too-high",
-                    Placeholders.of("max", formatCost(maxCost)).build());
+            msg(player, "soyslinkteam.settings.cost.too-high", formatCost(maxCost));
             return;
         }
         TeamSettingChangeEvent costEvent = new TeamSettingChangeEvent(team,
@@ -311,11 +312,80 @@ public class SetSub extends SubCommand {
         }
         team.getSettings().setEconomyCost(cost);
         plugin.getTeamManager().save(team);
-        msg(player, "settings.cost.success",
-                Placeholders.of("cost", formatCost(cost)).build());
-        team.broadcast(plugin.getMessageManager().get("settings.cost.broadcast",
-                Placeholders.of("player", player.getName())
-                        .and("cost", formatCost(cost)).build()));
+        msg(player, "soyslinkteam.settings.cost.success", formatCost(cost));
+        team.broadcast(plugin.getMessageManager().get("soyslinkteam.settings.cost.broadcast",
+                player.getName(), formatCost(cost)));
+    }
+
+    private void setItemCost(Player player, Team team, String label, String[] args) {
+        if (!checkAction(player, team, TeamAction.SET_ITEMCOST)) {
+            return;
+        }
+        if (!plugin.getConfigManager().isJoinMethodEnabled("item")) {
+            msg(player, "soyslinkteam.settings.itemcost.method-disabled");
+            return;
+        }
+        // 清空：空参数或 off
+        if (args.length < 2 || args[1].equalsIgnoreCase("off")) {
+            TeamSettingChangeEvent itemEvent = new TeamSettingChangeEvent(team,
+                    TeamSettingChangeEvent.SettingType.COST,
+                    String.join(",", team.getSettings().getItemCost()), "", player);
+            if (!callEvent(itemEvent, player)) {
+                return;
+            }
+            team.getSettings().setItemCost(null);
+            plugin.getTeamManager().save(team);
+            msg(player, "soyslinkteam.settings.itemcost.cleared");
+            return;
+        }
+
+        // 解析 "MATERIAL:AMOUNT" 列表
+        int maxItems = 0;
+        try {
+            maxItems = plugin.getConfigManager().getJoinMethodSection("item").getInt("max-items", 0);
+        } catch (Throwable ignored) {
+            maxItems = 0;
+        }
+        java.util.List<String> items = new java.util.ArrayList<>();
+        for (int i = 1; i < args.length; i++) {
+            String entry = args[i].trim();
+            String[] parts = entry.split(":", 2);
+            Material material = Material.matchMaterial(parts[0].trim());
+            if (material == null) {
+                msg(player, "soyslinkteam.settings.itemcost.invalid-material", parts[0].trim());
+                return;
+            }
+            int amount = 1;
+            if (parts.length > 1) {
+                try {
+                    amount = Integer.parseInt(parts[1].trim());
+                } catch (NumberFormatException e) {
+                    amount = 1;
+                }
+            }
+            if (amount <= 0) {
+                msg(player, "soyslinkteam.settings.itemcost.invalid-amount", parts[0].trim());
+                return;
+            }
+            items.add(material.name() + ":" + amount);
+        }
+        if (maxItems > 0 && items.size() > maxItems) {
+            msg(player, "soyslinkteam.settings.itemcost.too-many", maxItems);
+            return;
+        }
+
+        TeamSettingChangeEvent itemEvent = new TeamSettingChangeEvent(team,
+                TeamSettingChangeEvent.SettingType.COST,
+                String.join(",", team.getSettings().getItemCost()),
+                String.join(",", items), player);
+        if (!callEvent(itemEvent, player)) {
+            return;
+        }
+        team.getSettings().setItemCost(items);
+        plugin.getTeamManager().save(team);
+        msg(player, "soyslinkteam.settings.itemcost.success", String.join(", ", items));
+        team.broadcast(plugin.getMessageManager().get("soyslinkteam.settings.itemcost.broadcast",
+                player.getName(), String.join(", ", items)));
     }
 
     private String formatCost(double cost) {

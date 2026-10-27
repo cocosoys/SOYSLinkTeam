@@ -1,5 +1,9 @@
 package soys.soyslinkteam.team;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 /**
  * 队伍可变设置项。
  * <p>与 {@link Team} 分离，便于后续版本扩展新设置而不污染队伍主体。</p>
@@ -20,6 +24,9 @@ public class TeamSettings {
 
     /** 入队费用（经济消耗入队），0 表示不收费 */
     private volatile double economyCost = 0.0;
+
+    /** 入队所需消耗的物品，元素格式 "MATERIAL:AMOUNT"（物品/点券消耗入队），空列表表示无要求 */
+    private volatile List<String> itemCost = new ArrayList<>();
 
     public boolean isOpen() {
         return open;
@@ -75,5 +82,26 @@ public class TeamSettings {
 
     public boolean hasEconomyCost() {
         return economyCost > 0;
+    }
+
+    /**
+     * 入队所需消耗的物品列表（格式 "MATERIAL:AMOUNT"）。返回的是内部列表的只读视图。
+     */
+    public List<String> getItemCost() {
+        return Collections.unmodifiableList(itemCost);
+    }
+
+    /**
+     * 设置入队所需消耗的物品列表。传入 null 视为清空。
+     */
+    public void setItemCost(List<String> itemCost) {
+        this.itemCost = itemCost == null ? new ArrayList<>() : new ArrayList<>(itemCost);
+    }
+
+    /**
+     * 队伍是否设置了物品消耗入队要求。
+     */
+    public boolean hasItemCost() {
+        return itemCost != null && !itemCost.isEmpty();
     }
 }

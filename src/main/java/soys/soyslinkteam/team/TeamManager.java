@@ -10,7 +10,6 @@ import soys.soyslinkteam.event.TeamCreateEvent;
 import soys.soyslinkteam.event.TeamDisbandEvent;
 import soys.soyslinkteam.event.TeamTransferEvent;
 import soys.soyslinkteam.team.TeamMember;
-import soys.soyslinkteam.util.Placeholders;
 import soys.soyslinkteam.util.Text;
 
 import java.util.ArrayList;
@@ -515,8 +514,8 @@ public class TeamManager {
 
         Player removedPlayer = removed.getPlayer();
         if (removedPlayer != null && removedPlayer.isOnline()) {
-            plugin.getMessageManager().send(removedPlayer, "team.disband.empty",
-                    Placeholders.of("team", name).build());
+            plugin.getMessageManager().send(removedPlayer, "soyslinkteam.team.disband.empty",
+                    name);
         }
         debug("空队伍 " + name + " 因最后一名成员离开而自动解散");
     }
@@ -552,15 +551,15 @@ public class TeamManager {
         team.transferLeader(successor.getUuid());
         this.save(team);
 
-        team.broadcast(plugin.getMessageManager().get("member.transfer.broadcast",
-                Placeholders.of("player", successor.getName()).build()));
-        team.broadcast(plugin.getMessageManager().get("team.disband.autotransfer.notice",
-                Placeholders.of("old", leader.getName()).and("player", successor.getName()).build()));
+        team.broadcast(plugin.getMessageManager().get("soyslinkteam.member.transfer.broadcast",
+                successor.getName()));
+        team.broadcast(plugin.getMessageManager().get("soyslinkteam.team.disband.autotransfer.notice",
+                leader.getName(), successor.getName()));
 
         Player newLeader = successor.getPlayer();
         if (newLeader != null && newLeader.isOnline()) {
-            plugin.getMessageManager().send(newLeader, "member.transfer.received",
-                    Placeholders.of("team", team.getName()).build());
+            plugin.getMessageManager().send(newLeader, "soyslinkteam.member.transfer.received",
+                    team.getName());
         }
         debug("队长 " + leader.getName() + " 离线超过 " + minutes + " 分钟，队伍 " + team.getName()
                 + " 已自动转让队长给 " + successor.getName());

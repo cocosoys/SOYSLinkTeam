@@ -4,8 +4,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import soys.soyslinkteam.SOYSLinkTeam;
 import soys.soyslinkteam.command.SubCommand;
-import soys.soyslinkteam.storage.DataStorage;
-import soys.soyslinkteam.util.Placeholders;
 
 import java.util.Arrays;
 import java.util.List;
@@ -37,39 +35,25 @@ public class AdminSyncSub extends SubCommand {
     @Override
     public void execute(CommandSender sender, String label, String[] args) {
         if (plugin.getStorageManager().getSecondaries().isEmpty()) {
-            msg(sender, "admin.sync.no-secondary", null);
+            msg(sender, "soyslinkteam.admin.sync.no-secondary");
             return;
         }
 
-        msg(sender, "admin.sync.started", null);
+        msg(sender, "soyslinkteam.admin.sync.started");
 
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
                 long start = System.currentTimeMillis();
                 int count = plugin.getStorageManager().syncToSecondaries();
                 long ms = System.currentTimeMillis() - start;
-                String targets = buildTargets();
-                Bukkit.getScheduler().runTask(plugin, () -> msg(sender, "admin.sync.success",
-                        Placeholders.of("count", count)
-                                .and("targets", targets)
-                                .and("ms", ms).build()));
+                int secondaries = plugin.getStorageManager().getSecondaries().size();
+                Bukkit.getScheduler().runTask(plugin, () -> msg(sender, "soyslinkteam.admin.sync.success",
+                        count, secondaries, ms));
             } catch (Exception e) {
-                Bukkit.getScheduler().runTask(plugin, () -> msg(sender, "admin.sync.failed",
-                        Placeholders.of("error",
-                                e.getMessage() == null ? "未知错误" : e.getMessage()).build()));
+                Bukkit.getScheduler().runTask(plugin, () -> msg(sender, "soyslinkteam.admin.sync.failed",
+                        e.getMessage() == null ? "未知错误" : e.getMessage()));
                 plugin.getLogger().log(java.util.logging.Level.SEVERE, "同步失败", e);
             }
         });
-    }
-
-    private String buildTargets() {
-        StringBuilder sb = new StringBuilder();
-        for (DataStorage storage : plugin.getStorageManager().getSecondaries()) {
-            if (sb.length() > 0) {
-                sb.append("&7, &e");
-            }
-            sb.append(storage.getType().getDisplayName());
-        }
-        return sb.toString();
     }
 }

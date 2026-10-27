@@ -9,7 +9,6 @@ import soys.soyslinkteam.command.SubCommand;
 import soys.soyslinkteam.event.PlayerKickedEvent;
 import soys.soyslinkteam.team.Team;
 import soys.soyslinkteam.util.CooldownManager;
-import soys.soyslinkteam.util.Placeholders;
 import soys.soyslinkteam.util.Text;
 
 import java.util.Arrays;
@@ -43,25 +42,25 @@ public class AdminKickSub extends SubCommand {
     @Override
     public void execute(CommandSender sender, String label, String[] args) {
         if (args.length < 1) {
-            msgList(sender, "admin.usage", null);
+            msgList(sender, "soyslinkteam.admin.usage", label);
             return;
         }
         String targetName = args[0];
         UUID targetId = resolve(targetName);
         if (targetId == null) {
-            msg(sender, "general.player-not-found", Placeholders.of("player", targetName).build());
+            msg(sender, "soyslinkteam.general.player-not-found", targetName);
             return;
         }
 
         UUID teamId = plugin.getTeamManager().getPlayerTeamId(targetId);
         if (teamId == null) {
-            msg(sender, "team.target-not-in-team", Placeholders.of("player", targetName).build());
+            msg(sender, "soyslinkteam.team.target-not-in-team", targetName);
             return;
         }
 
         plugin.getTeamManager().getTeamAsync(teamId, team -> {
             if (team == null) {
-                msg(sender, "team.target-not-in-team", Placeholders.of("player", targetName).build());
+                msg(sender, "soyslinkteam.team.target-not-in-team", targetName);
                 return;
             }
             Player kicked = Bukkit.getPlayer(targetId);
@@ -75,17 +74,16 @@ public class AdminKickSub extends SubCommand {
                 plugin.getCooldownManager().set(CooldownManager.REJOIN, targetId,
                         plugin.getConfigManager().getRejoinCooldown());
             }
-            msg(sender, "admin.force.kick-success",
-                    Placeholders.of("player", targetName).and("team", team.getName()).build());
+            msg(sender, "soyslinkteam.admin.force.kick-success", targetName, team.getName());
             // 若该成员是最后一名，队伍已因空自动解散
             if (team.isDisbanded()) {
-                msg(sender, "team.disband.success", Placeholders.of("team", team.getName()).build());
+                msg(sender, "soyslinkteam.team.disband.success", team.getName());
             }
 
             kicked = Bukkit.getPlayer(targetId);
             if (kicked != null && kicked.isOnline()) {
-                msgList(kicked, "member.kick.kicked",
-                        Placeholders.of("operator", sender.getName()).and("team", team.getName()).build());
+                msgList(kicked, "soyslinkteam.member.kick.kicked",
+                        sender.getName(), team.getName());
             }
         });
     }

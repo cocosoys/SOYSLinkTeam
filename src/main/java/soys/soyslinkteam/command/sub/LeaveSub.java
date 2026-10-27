@@ -10,7 +10,6 @@ import soys.soyslinkteam.permission.TeamAction;
 import soys.soyslinkteam.team.Team;
 import soys.soyslinkteam.team.TeamMember;
 import soys.soyslinkteam.util.CooldownManager;
-import soys.soyslinkteam.util.Placeholders;
 
 import java.util.Arrays;
 import java.util.List;
@@ -60,13 +59,11 @@ public class LeaveSub extends SubCommand {
             plugin.getTeamManager().removeMember(team, player.getUniqueId());
             applyRejoinCooldown(player);
 
-            team.broadcast(plugin.getMessageManager().get("member.leave-broadcast", Placeholders
-                    .of("player", player.getName())
-                    .and("size", team.getSize())
-                    .and("max", plugin.getTeamManager().getMaxSize(team))
-                    .build()));
+            team.broadcast(plugin.getMessageManager().get("soyslinkteam.member.leave-broadcast",
+                    player.getName(), team.getSize(),
+                    plugin.getTeamManager().getMaxSize(team)));
 
-            msg(player, "member.leave-success", Placeholders.of("team", teamName).build());
+            msg(player, "soyslinkteam.member.leave-success", teamName);
         });
     }
 
@@ -77,7 +74,7 @@ public class LeaveSub extends SubCommand {
         String action = plugin.getConfigManager().getLeaderQuitAction();
 
         if ("DENY".equals(action)) {
-            msg(player, "member.leave-leader-denied", Placeholders.of("label", label).build());
+            msg(player, "soyslinkteam.member.leave-leader-denied", label);
             return;
         }
 
@@ -85,14 +82,14 @@ public class LeaveSub extends SubCommand {
 
         if ("DISBAND".equals(action)) {
             if (!plugin.getTeamManager().disbandTeam(team, player)) {
-                msg(player, "event.cancelled", Placeholders.of("reason", "").build());
+                msg(player, "soyslinkteam.event.cancelled", "");
                 return;
             }
-            team.broadcast(plugin.getMessageManager().get("team.disband.broadcast", Placeholders
-                    .of("team", teamName).and("player", player.getName()).build()));
+            team.broadcast(plugin.getMessageManager().get("soyslinkteam.team.disband.broadcast",
+                    teamName, player.getName()));
             plugin.getInviteManager().removeByTeam(team.getId());
             applyRejoinCooldown(player);
-            msg(player, "member.leave-leader-disbanded", null);
+            msg(player, "soyslinkteam.member.leave-leader-disbanded");
             return;
         }
 
@@ -100,12 +97,12 @@ public class LeaveSub extends SubCommand {
         TeamMember successor = team.pickSuccessor(player.getUniqueId());
         if (successor == null) {
             if (!plugin.getTeamManager().disbandTeam(team, player)) {
-                msg(player, "event.cancelled", Placeholders.of("reason", "").build());
+                msg(player, "soyslinkteam.event.cancelled", "");
                 return;
             }
             plugin.getInviteManager().removeByTeam(team.getId());
             applyRejoinCooldown(player);
-            msg(player, "member.leave-leader-disbanded", null);
+            msg(player, "soyslinkteam.member.leave-leader-disbanded");
             return;
         }
 
@@ -125,22 +122,18 @@ public class LeaveSub extends SubCommand {
         plugin.getTeamManager().save(team);
         applyRejoinCooldown(player);
 
-        team.broadcast(plugin.getMessageManager().get("member.leave-broadcast", Placeholders
-                .of("player", player.getName())
-                .and("size", team.getSize())
-                .and("max", plugin.getTeamManager().getMaxSize(team))
-                .build()));
-        team.broadcast(plugin.getMessageManager().get("member.transfer.broadcast",
-                Placeholders.of("player", successor.getName()).build()));
+        team.broadcast(plugin.getMessageManager().get("soyslinkteam.member.leave-broadcast",
+                player.getName(), team.getSize(),
+                plugin.getTeamManager().getMaxSize(team)));
+        team.broadcast(plugin.getMessageManager().get("soyslinkteam.member.transfer.broadcast",
+                successor.getName()));
 
         Player newLeader = successor.getPlayer();
         if (newLeader != null && newLeader.isOnline()) {
-            msg(newLeader, "member.transfer.received",
-                    Placeholders.of("team", teamName).build());
+            msg(newLeader, "soyslinkteam.member.transfer.received", teamName);
         }
 
-        msg(player, "member.leave-leader-transferred",
-                Placeholders.of("player", successor.getName()).build());
+        msg(player, "soyslinkteam.member.leave-leader-transferred", successor.getName());
     }
 
     private void applyRejoinCooldown(Player player) {

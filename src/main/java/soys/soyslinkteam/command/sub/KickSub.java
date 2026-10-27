@@ -10,7 +10,6 @@ import soys.soyslinkteam.team.Team;
 import soys.soyslinkteam.team.TeamMember;
 import soys.soyslinkteam.team.TeamRole;
 import soys.soyslinkteam.util.CooldownManager;
-import soys.soyslinkteam.util.Placeholders;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,7 +41,7 @@ public class KickSub extends SubCommand {
         Player player = (Player) sender;
 
         if (args.length < 1) {
-            msg(player, "member.kick.usage", Placeholders.of("label", label).build());
+            msg(player, "soyslinkteam.member.kick.usage", label);
             return;
         }
 
@@ -54,18 +53,17 @@ public class KickSub extends SubCommand {
             String targetName = args[0];
             TeamMember target = team.getMemberByName(targetName);
             if (target == null) {
-                msg(player, "team.target-not-in-your-team",
-                        Placeholders.of("player", targetName).build());
+                msg(player, "soyslinkteam.team.target-not-in-your-team", targetName);
                 return;
             }
 
             if (target.getUuid().equals(player.getUniqueId())) {
-                msg(player, "member.kick.cannot-kick-self", null);
+                msg(player, "soyslinkteam.member.kick.cannot-kick-self");
                 return;
             }
 
             if (team.isLeader(target.getUuid())) {
-                msg(player, "member.kick.cannot-kick-leader", null);
+                msg(player, "soyslinkteam.member.kick.cannot-kick-leader");
                 return;
             }
 
@@ -78,7 +76,7 @@ public class KickSub extends SubCommand {
                 canKick = operator != null && operator.getRole().isHigherThan(target.getRole());
             }
             if (!canKick) {
-                msg(player, "member.kick.cannot-kick-same-role", null);
+                msg(player, "soyslinkteam.member.kick.cannot-kick-same-role");
                 return;
             }
 
@@ -95,21 +93,15 @@ public class KickSub extends SubCommand {
                         plugin.getConfigManager().getRejoinCooldown());
             }
 
-            msg(player, "member.kick.success",
-                    Placeholders.of("player", target.getName()).build());
+            msg(player, "soyslinkteam.member.kick.success", target.getName());
 
-            team.broadcast(plugin.getMessageManager().get("member.kick.broadcast", Placeholders
-                    .of("player", target.getName())
-                    .and("operator", player.getName())
-                    .and("size", team.getSize())
-                    .and("max", plugin.getTeamManager().getMaxSize(team))
-                    .build()), target.getUuid());
+            team.broadcast(plugin.getMessageManager().get("soyslinkteam.member.kick.broadcast",
+                    target.getName(), player.getName()), target.getUuid());
 
             Player kicked = target.getPlayer();
             if (kicked != null && kicked.isOnline()) {
-                msgList(kicked, "member.kick.kicked", Placeholders
-                        .of("operator", player.getName())
-                        .and("team", team.getName()).build());
+                msgList(kicked, "soyslinkteam.member.kick.kicked",
+                        player.getName(), team.getName());
             }
         });
     }

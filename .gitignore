@@ -5,3 +5,9 @@ TODO.md
 *.html
 # 插件内置网页资源必须随 jar 发布，不忽略
 !src/main/resources/web/*.html
+
+# 调试日志与反编译临时产物
+build.exit
+build.log
+jarcheck.txt
+com/

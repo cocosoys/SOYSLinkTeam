@@ -7,12 +7,10 @@ import soys.soyslinkteam.SOYSLinkTeam;
 import soys.soyslinkteam.event.TeamEvent;
 import soys.soyslinkteam.permission.TeamAction;
 import soys.soyslinkteam.team.Team;
-import soys.soyslinkteam.util.Placeholders;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 
 /**
@@ -79,12 +77,12 @@ public abstract class SubCommand {
         plugin.getMessageManager().send(sender, key);
     }
 
-    protected void msg(CommandSender sender, String key, Map<String, String> placeholders) {
-        plugin.getMessageManager().send(sender, key, placeholders);
+    protected void msg(CommandSender sender, String key, Object... args) {
+        plugin.getMessageManager().send(sender, key, args);
     }
 
-    protected void msgList(CommandSender sender, String key, Map<String, String> placeholders) {
-        plugin.getMessageManager().sendList(sender, key, placeholders);
+    protected void msgList(CommandSender sender, String key, Object... args) {
+        plugin.getMessageManager().sendList(sender, key, args);
     }
 
     /**
@@ -92,12 +90,12 @@ public abstract class SubCommand {
      */
     protected void withPlayerTeam(Player player, Consumer<Team> action) {
         if (!plugin.getTeamManager().hasTeam(player.getUniqueId())) {
-            msg(player, "team.not-in-team");
+            msg(player, "soyslinkteam.team.not-in-team");
             return;
         }
         plugin.getTeamManager().getPlayerTeamAsync(player.getUniqueId(), team -> {
             if (team == null) {
-                msg(player, "team.not-in-team");
+                msg(player, "soyslinkteam.team.not-in-team");
                 return;
             }
             action.accept(team);
@@ -113,7 +111,7 @@ public abstract class SubCommand {
         if (plugin.getPermissionManager().can(player, team, action)) {
             return true;
         }
-        msg(player, "general.no-permission");
+        msg(player, "soyslinkteam.general.no-permission");
         return false;
     }
 
@@ -126,8 +124,8 @@ public abstract class SubCommand {
         Bukkit.getPluginManager().callEvent(event);
         if (event.isCancelled()) {
             String reason = event.getCancelReason();
-            msg(sender, "event.cancelled",
-                    Placeholders.of("reason", reason == null ? "" : " &7(" + reason + ")").build());
+            msg(sender, "soyslinkteam.event.cancelled",
+                    reason == null ? "" : " &7(" + reason + ")");
             return false;
         }
         return true;

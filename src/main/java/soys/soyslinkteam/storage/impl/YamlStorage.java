@@ -257,25 +257,21 @@ public class YamlStorage implements DataStorage {
     }
 
     private void serialize(Team team) {
-        String base = ROOT + "." + team.getId();
-        config.set(base + ".name", team.getName());
-        config.set(base + ".leader", team.getLeader() == null ? null : team.getLeader().toString());
-        config.set(base + ".created-at", team.getCreatedAt());
-        config.set(base + ".settings.open", team.getSettings().isOpen());
-        config.set(base + ".settings.password", team.getSettings().getPassword());
-        config.set(base + ".settings.notice", team.getSettings().getNotice());
-        config.set(base + ".settings.tag", team.getSettings().getTag());
-        config.set(base + ".settings.economy-cost", team.getSettings().getEconomyCost());
+        TeamYaml.write(config, ROOT + "." + team.getId(), team);
+    }
 
-        // 整体重写成员节点，避免残留已退出的成员
-        config.set(base + ".members", null);
-        for (TeamMember member : team.getMembers()) {
-            String path = base + ".members." + member.getUuid();
-            config.set(path + ".name", member.getName());
-            config.set(path + ".role", member.getRole().name());
-            config.set(path + ".joined-at", member.getJoinedAt());
-            config.set(path + ".last-seen", member.getLastSeen());
-            config.set(path + ".chat-channel", member.isChatChannel());
+    @Override
+    public void snapshotTo(File file) throws Exception {
+        synchronized (lock) {
+            YamlConfiguration snapshot = new YamlConfiguration();
+            ConfigurationSection root = config.getConfigurationSection(ROOT);
+            if (root != null) {
+                // 深拷贝当前全量数据，保证快照与主文件隔离
+                snapshot.createSection(ROOT, root.getValues(true));
+            } else {
+                snapshot.createSection(ROOT);
+            }
+            snapshot.save(file);
         }
     }
 
@@ -293,6 +289,7 @@ public class YamlStorage implements DataStorage {
         team.getSettings().setNotice(section.getString("settings.notice", ""));
         team.getSettings().setTag(section.getString("settings.tag", ""));
         team.getSettings().setEconomyCost(section.getDouble("settings.economy-cost", 0.0));
+        team.getSettings().setItemCost(section.getStringList("settings.item-cost"));
 
         ConfigurationSection members = section.getConfigurationSection("members");
         if (members != null) {

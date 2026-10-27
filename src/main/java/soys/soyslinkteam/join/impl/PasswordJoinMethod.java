@@ -5,7 +5,6 @@ import soys.soyslinkteam.join.JoinContext;
 import soys.soyslinkteam.join.JoinResult;
 import soys.soyslinkteam.team.Team;
 import soys.soyslinkteam.util.PasswordUtil;
-import soys.soyslinkteam.util.Placeholders;
 
 import java.util.Map;
 import java.util.UUID;
@@ -73,8 +72,7 @@ public class    PasswordJoinMethod extends AbstractJoinMethod {
         if (record != null) {
             int remaining = record.getCooldownRemaining(getMaxAttempts(), getAttemptCooldown());
             if (remaining > 0) {
-                return JoinResult.denied("join.password.locked",
-                        Placeholders.of("seconds", remaining).and("team", team.getName()).build());
+                return JoinResult.denied("soyslinkteam.join.password.locked", remaining);
             }
             if (record.isCooldownFinished(getMaxAttempts(), getAttemptCooldown())) {
                 attempts.remove(key);
@@ -84,9 +82,8 @@ public class    PasswordJoinMethod extends AbstractJoinMethod {
 
         // 未提供口令
         if (!context.hasArgument()) {
-            return JoinResult.denied("join.password.required",
-                    Placeholders.of("team", team.getName())
-                            .and("label", context.getLabel()).build());
+            return JoinResult.denied("soyslinkteam.join.password.required",
+                    team.getName(), context.getLabel());
         }
 
         String expected = team.getSettings().getPassword();
@@ -108,12 +105,9 @@ public class    PasswordJoinMethod extends AbstractJoinMethod {
 
         int remaining = Math.max(0, getMaxAttempts() - record.getCount());
         if (remaining <= 0) {
-            return JoinResult.denied("join.password.locked",
-                    Placeholders.of("seconds", getAttemptCooldown())
-                            .and("team", team.getName()).build());
+            return JoinResult.denied("soyslinkteam.join.password.locked", getAttemptCooldown());
         }
-        return JoinResult.denied("join.password.incorrect",
-                Placeholders.of("remaining", remaining).and("team", team.getName()).build());
+        return JoinResult.denied("soyslinkteam.join.password.incorrect", remaining);
     }
 
     /**

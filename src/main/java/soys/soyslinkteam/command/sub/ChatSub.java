@@ -5,7 +5,6 @@ import org.bukkit.entity.Player;
 import soys.soyslinkteam.SOYSLinkTeam;
 import soys.soyslinkteam.command.SubCommand;
 import soys.soyslinkteam.team.Team;
-import soys.soyslinkteam.util.Placeholders;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -38,12 +37,12 @@ public class ChatSub extends SubCommand {
     @Override
     public void execute(CommandSender sender, String label, String[] args) {
         if (!(sender instanceof Player)) {
-            msg(sender, "general.player-only");
+            msg(sender, "soyslinkteam.general.player-only");
             return;
         }
         Player player = (Player) sender;
         if (!plugin.getConfigManager().isTeamChatEnabled()) {
-            msg(player, "chat.disabled-feature");
+            msg(player, "soyslinkteam.chat.disabled-feature");
             return;
         }
         withPlayerTeam(player, team -> {
@@ -59,15 +58,18 @@ public class ChatSub extends SubCommand {
                 } else if (a.equals("toggle") || a.equals("切换")) {
                     on = plugin.getTeamChannelManager().toggleTeamChat(player.getUniqueId());
                 } else {
-                    msg(player, "chat.usage");
+                    msg(player, "soyslinkteam.chat.usage");
                     return;
                 }
                 if (!(a.equals("toggle") || a.equals("切换"))) {
                     plugin.getTeamChannelManager().setTeamChat(player.getUniqueId(), on);
                 }
             }
-            msg(player, on ? "chat.enabled" : "chat.disabled",
-                    Placeholders.of("team", team.getName()).build());
+            if (on) {
+                msg(player, "soyslinkteam.chat.enabled", team.getName());
+            } else {
+                msg(player, "soyslinkteam.chat.disabled");
+            }
         });
     }
 

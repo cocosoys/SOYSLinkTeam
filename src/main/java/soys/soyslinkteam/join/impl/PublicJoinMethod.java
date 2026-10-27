@@ -6,7 +6,6 @@ import soys.soyslinkteam.SOYSLinkTeam;
 import soys.soyslinkteam.join.JoinContext;
 import soys.soyslinkteam.join.JoinResult;
 import soys.soyslinkteam.team.Team;
-import soys.soyslinkteam.util.Placeholders;
 
 /**
  * 公开队伍直接加入。
@@ -55,8 +54,8 @@ public class PublicJoinMethod extends AbstractJoinMethod {
         if (isRequireLeaderOnline()) {
             Player leader = team.getLeader() == null ? null : Bukkit.getPlayer(team.getLeader());
             if (leader == null || !leader.isOnline()) {
-                return JoinResult.denied("join.public.leader-offline",
-                        Placeholders.of("team", team.getName()).build());
+                return JoinResult.denied("soyslinkteam.join.public.leader-offline",
+                        team.getName());
             }
         }
 

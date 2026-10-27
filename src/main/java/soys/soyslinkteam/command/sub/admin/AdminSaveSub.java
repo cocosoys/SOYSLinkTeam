@@ -3,7 +3,6 @@ package soys.soyslinkteam.command.sub.admin;
 import org.bukkit.command.CommandSender;
 import soys.soyslinkteam.SOYSLinkTeam;
 import soys.soyslinkteam.command.SubCommand;
-import soys.soyslinkteam.util.Placeholders;
 
 import java.util.Arrays;
 import java.util.List;
@@ -35,6 +34,6 @@ public class AdminSaveSub extends SubCommand {
     @Override
     public void execute(CommandSender sender, String label, String[] args) {
         int count = plugin.getTeamManager().saveAll();
-        msg(sender, "admin.save.success", Placeholders.of("count", count).build());
+        msg(sender, "soyslinkteam.admin.save.success", count);
     }
 }

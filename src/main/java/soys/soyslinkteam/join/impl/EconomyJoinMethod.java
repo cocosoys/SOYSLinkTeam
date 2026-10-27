@@ -9,7 +9,6 @@ import soys.soyslinkteam.SOYSLinkTeam;
 import soys.soyslinkteam.join.JoinContext;
 import soys.soyslinkteam.join.JoinResult;
 import soys.soyslinkteam.team.Team;
-import soys.soyslinkteam.util.Placeholders;
 
 /**
  * 经济消耗入队。
@@ -81,11 +80,9 @@ public class EconomyJoinMethod extends AbstractJoinMethod {
         }
 
         if (!econ.has(player, cost)) {
-            return JoinResult.denied("join.economy.insufficient",
-                    Placeholders.of("cost", formatCost(cost))
-                            .and("balance", formatCost(econ.getBalance(player)))
-                            .and("team", team.getName())
-                            .build());
+            return JoinResult.denied("soyslinkteam.join.economy.insufficient",
+                    team.getName(), formatCost(cost),
+                    formatCost(econ.getBalance(player)));
         }
 
         return JoinResult.success();
@@ -118,8 +115,8 @@ public class EconomyJoinMethod extends AbstractJoinMethod {
                         + (response == null ? "无响应" : response.errorMessage));
                 // 扣款失败时通知玩家（回到主线程发送消息）
                 Bukkit.getScheduler().runTask(plugin, () ->
-                        plugin.getMessageManager().send(player, "join.economy.charge-failed",
-                                Placeholders.of("cost", formatCost(cost)).build()));
+                        plugin.getMessageManager().send(player, "soyslinkteam.join.economy.charge-failed",
+                                formatCost(cost)));
             }
         });
     }

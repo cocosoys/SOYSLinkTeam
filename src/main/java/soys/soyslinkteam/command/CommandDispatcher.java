@@ -6,7 +6,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import soys.soyslinkteam.SOYSLinkTeam;
-import soys.soyslinkteam.util.Placeholders;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -66,19 +65,18 @@ public abstract class CommandDispatcher implements CommandExecutor, TabCompleter
 
         SubCommand sub = getSubCommand(args[0]);
         if (sub == null) {
-            msg(sender, "general.unknown-command", Placeholders
-                    .of("input", args[0]).and("label", label).build());
+            msg(sender, "soyslinkteam.general.unknown-command", args[0], label);
             return true;
         }
 
         if (sub.isPlayerOnly() && !(sender instanceof Player)) {
-            msg(sender, "general.player-only", null);
+            msg(sender, "soyslinkteam.general.player-only");
             return true;
         }
 
         String permission = sub.getPermission();
         if (permission != null && !sender.hasPermission(permission)) {
-            msg(sender, "general.no-permission", null);
+            msg(sender, "soyslinkteam.general.no-permission");
             return true;
         }
 
@@ -90,7 +88,7 @@ public abstract class CommandDispatcher implements CommandExecutor, TabCompleter
         } catch (Throwable t) {
             plugin.getLogger().severe("执行子指令 " + sub.getName() + " 时出错: " + t.getMessage());
             t.printStackTrace();
-            msg(sender, "general.storage-error", null);
+            msg(sender, "soyslinkteam.general.storage-error");
         }
         return true;
     }
@@ -132,7 +130,7 @@ public abstract class CommandDispatcher implements CommandExecutor, TabCompleter
         return result == null ? Collections.emptyList() : result;
     }
 
-    private void msg(CommandSender sender, String key, Map<String, String> placeholders) {
-        plugin.getMessageManager().send(sender, key, placeholders);
+    private void msg(CommandSender sender, String key, Object... args) {
+        plugin.getMessageManager().send(sender, key, args);
     }
 }

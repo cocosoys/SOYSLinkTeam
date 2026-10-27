@@ -7,26 +7,34 @@ import soys.soyslinkteam.SOYSLinkTeam;
 import soys.soyslinkteam.util.Text;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
- * 消息文件（messages.yml）管理器。
- * <p>负责消息读取、占位符替换与发送。缺失的键会回退到 jar 内的默认值。</p>
+ * 语言文件管理器（i18n）。
+ * <p>
+ * 语言文件位于 {@code plugins/SOYSLinkTeam/language/<code>.yml}，code 为全小写下划线
+ * （{@code zh_cn} / {@code en_us}），与 SOYSHTTPOverMC 的 i18n 规范对齐：
+ * <ul>
+ *   <li>平铺键：一行一条完整点分 key，前缀固定 {@code soyslinkteam.}；</li>
+ *   <li>颜色码直接写 {@code §}（兼容残留的 {@code &}）；</li>
+ *   <li>业务占位符为位置参数 {@code {0} {1} ...}；</li>
+ *   <li>{@code {prefix}} 为内置前缀占位符，由本类按 {@code soyslinkteam.prefix} 自动替换。</li>
+ * </ul>
+ * 回退链：外部当前语言文件 → jar 内置当前语言 → jar 内置 en_us。
+ * </p>
  */
 public class MessageManager {
 
-    private static final String PREFIX_KEY = "prefix";
+    private static final String PREFIX_KEY = "soyslinkteam.prefix";
+    private static final String DEFAULT_LANG = "zh_cn";
+    private static final String FALLBACK_LANG = "en_us";
 
     private final SOYSLinkTeam plugin;
     private FileConfiguration messages;
-    private FileConfiguration defaults;
     private String prefix = "";
 
     public MessageManager(SOYSLinkTeam plugin) {
@@ -35,75 +43,69 @@ public class MessageManager {
     }
 
     public void reload() {
-        String language = plugin.getConfigManager().getLanguage();
-        String fileName = resolveFileName(language);
+        String code = normalizeLanguage(plugin.getConfigManager().getLanguage());
+        File langDir = new File(plugin.getDataFolder(), "language");
 
-        File file = new File(plugin.getDataFolder(), fileName);
-        if (!file.exists()) {
-            // 尝试从 jar 释放对应语言文件，失败则回退到默认 messages.yml
-            if (!trySaveLanguageResource(language, fileName)) {
-                file = new File(plugin.getDataFolder(), "messages.yml");
-                if (!file.exists()) {
-                    plugin.saveResource("messages.yml", false);
-                }
-            }
+        // 首次运行释放内置语言文件（en_us 始终释放，当前语言一并释放）
+        saveResourceIfMissing("language/" + FALLBACK_LANG + ".yml");
+        saveResourceIfMissing("language/" + code + ".yml");
+
+        // 构建三层回退：external 当前语言 → internal 当前语言 → internal en_us
+        FileConfiguration internalEnUs = loadInternal("language/" + FALLBACK_LANG + ".yml");
+        FileConfiguration internalTarget = loadInternal("language/" + code + ".yml");
+        if (internalTarget == null) {
+            internalTarget = internalEnUs;
+        } else if (internalEnUs != null) {
+            internalTarget.setDefaults(internalEnUs);
         }
-        this.messages = YamlConfiguration.loadConfiguration(file);
-        this.defaults = loadInternalDefaults(language);
-        if (defaults != null) {
-            messages.setDefaults(defaults);
+
+        File extFile = new File(langDir, code + ".yml");
+        FileConfiguration ext = YamlConfiguration.loadConfiguration(extFile);
+        if (internalTarget != null) {
+            ext.setDefaults(internalTarget);
         }
-        this.prefix = messages.getString(PREFIX_KEY, "");
+        this.messages = ext;
+        this.prefix = ext.getString(PREFIX_KEY, "");
     }
 
     /**
-     * 根据语言配置解析消息文件名。
-     * zh_cn / 空 -> messages.yml（默认中文）
-     * en -> messages_en.yml
+     * 规范化语言标识：统一小写下划线，兼容旧的 zh_CN / zh / en 等写法。
      */
-    private String resolveFileName(String language) {
-        if (language == null || language.isEmpty()
-                || language.equalsIgnoreCase("zh_cn")
-                || language.equalsIgnoreCase("zhcn")
-                || language.equalsIgnoreCase("zh")) {
-            return "messages.yml";
+    private String normalizeLanguage(String raw) {
+        if (raw == null) {
+            return DEFAULT_LANG;
         }
-        return "messages_" + language.toLowerCase() + ".yml";
+        String c = raw.trim().toLowerCase().replace('-', '_');
+        if (c.isEmpty() || c.equals("zh") || c.equals("zh_cn") || c.equals("zhcn")) {
+            return DEFAULT_LANG;
+        }
+        if (c.equals("en") || c.equals("en_us") || c.equals("enus")) {
+            return FALLBACK_LANG;
+        }
+        return c;
     }
 
-    /**
-     * 尝试从 jar 释放指定语言的消息文件到插件目录。
-     * @return true 表示成功释放，false 表示 jar 中不存在该语言文件
-     */
-    private boolean trySaveLanguageResource(String language, String fileName) {
-        String resourcePath = resolveFileName(language);
-        try (InputStream stream = plugin.getResource(resourcePath)) {
-            if (stream == null) {
-                return false;
+    private void saveResourceIfMissing(String path) {
+        File target = new File(plugin.getDataFolder(), path);
+        if (target.exists()) {
+            return;
+        }
+        try (InputStream in = plugin.getResource(path)) {
+            if (in == null) {
+                return;
             }
-            plugin.saveResource(resourcePath, false);
-            return true;
+            plugin.saveResource(path, false);
+        } catch (Exception ignored) {
+        }
+    }
+
+    private FileConfiguration loadInternal(String path) {
+        try (InputStream in = plugin.getResource(path)) {
+            if (in == null) {
+                return null;
+            }
+            return YamlConfiguration.loadConfiguration(new InputStreamReader(in, StandardCharsets.UTF_8));
         } catch (Exception e) {
-            return false;
-        }
-    }
-
-    private FileConfiguration loadInternalDefaults(String language) {
-        String resourcePath = resolveFileName(language);
-        try (InputStream stream = plugin.getResource(resourcePath)) {
-            if (stream == null) {
-                // 指定语言不存在时回退到默认中文
-                try (InputStream fallback = plugin.getResource("messages.yml")) {
-                    if (fallback == null) {
-                        return null;
-                    }
-                    return YamlConfiguration.loadConfiguration(
-                            new InputStreamReader(fallback, StandardCharsets.UTF_8));
-                }
-            }
-            return YamlConfiguration.loadConfiguration(
-                    new InputStreamReader(stream, StandardCharsets.UTF_8));
-        } catch (IOException e) {
             return null;
         }
     }
@@ -113,79 +115,81 @@ public class MessageManager {
     // ================================================================
 
     /**
-     * 读取一条消息（已完成前缀与占位符替换，未翻译颜色）。
+     * 读取一条消息并完成 {prefix} 与 {i} 位置参数替换。缺键返回空串（不发送）。
      */
-    public String get(String key, Map<String, String> placeholders) {
+    public String get(String key, Object... args) {
         String raw = messages.getString(key);
         if (raw == null) {
-            return "&c[缺失消息: " + key + "]";
+            return "";
         }
-        return apply(raw, placeholders);
-    }
-
-    public String get(String key) {
-        return get(key, null);
+        return apply(raw, args);
     }
 
     /**
-     * 读取一个消息列表。若该键实际是单条字符串，则包装为单元素列表。
+     * 读取一条消息，缺键时使用代码内兜底文本（对齐 SOYSHTTPOverMC 的 I18n.t 语义）。
      */
-    public List<String> getList(String key, Map<String, String> placeholders) {
+    public String t(String key, String fallback, Object... args) {
+        String raw = messages.getString(key);
+        if (raw == null) {
+            raw = fallback;
+        }
+        if (raw == null) {
+            return "";
+        }
+        return apply(raw, args);
+    }
+
+    /**
+     * 读取一个消息列表。Bukkit 会把含 \n 的字符串值按行拆分为 List。
+     */
+    public List<String> getList(String key, Object... args) {
         List<String> raw = messages.getStringList(key);
-        if (raw.isEmpty()) {
+        if (raw == null || raw.isEmpty()) {
             String single = messages.getString(key);
             if (single == null) {
-                List<String> missing = new ArrayList<>();
-                missing.add("&c[缺失消息: " + key + "]");
-                return missing;
+                return new ArrayList<>();
             }
             raw = new ArrayList<>();
             raw.add(single);
         }
-        List<String> result = new ArrayList<>(raw.size());
+        List<String> out = new ArrayList<>(raw.size());
         for (String line : raw) {
-            result.add(apply(line, placeholders));
+            out.add(apply(line, args));
         }
-        return result;
+        return out;
     }
 
-    public List<String> getList(String key) {
-        return getList(key, null);
-    }
-
-    private String apply(String raw, Map<String, String> placeholders) {
-        Map<String, String> merged = new HashMap<>();
-        merged.put("prefix", prefix);
-        if (placeholders != null) {
-            merged.putAll(placeholders);
+    private String apply(String raw, Object... args) {
+        if (raw == null || raw.isEmpty()) {
+            return raw == null ? "" : raw;
         }
-        return Text.replace(raw, merged);
+        String r = raw.replace("{prefix}", prefix);
+        if (args != null) {
+            for (int i = 0; i < args.length; i++) {
+                r = r.replace("{" + i + "}", String.valueOf(args[i]));
+            }
+        }
+        return r;
     }
 
     // ================================================================
     //  发送
     // ================================================================
 
-    public void send(CommandSender sender, String key) {
-        send(sender, key, null);
-    }
-
-    public void send(CommandSender sender, String key, Map<String, String> placeholders) {
+    public void send(CommandSender sender, String key, Object... args) {
         if (sender == null) {
             return;
         }
-        Text.send(sender, get(key, placeholders));
+        Text.send(sender, get(key, args));
     }
 
-    public void sendList(CommandSender sender, String key) {
-        sendList(sender, key, null);
-    }
-
-    public void sendList(CommandSender sender, String key, Map<String, String> placeholders) {
+    public void sendList(CommandSender sender, String key, Object... args) {
         if (sender == null) {
             return;
         }
-        Text.send(sender, getList(key, placeholders));
+        for (String line : getList(key, args)) {
+            Text.send(sender, line);
+        }
     }
 
     public String getPrefix() {

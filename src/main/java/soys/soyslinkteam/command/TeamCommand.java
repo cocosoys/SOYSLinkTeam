@@ -3,6 +3,9 @@ package soys.soyslinkteam.command;
 import org.bukkit.command.CommandSender;
 import soys.soyslinkteam.SOYSLinkTeam;
 import soys.soyslinkteam.command.sub.AcceptSub;
+import soys.soyslinkteam.command.sub.ApplicationsSub;
+import soys.soyslinkteam.command.sub.ApplySub;
+import soys.soyslinkteam.command.sub.ApproveSub;
 import soys.soyslinkteam.command.sub.ChatSub;
 import soys.soyslinkteam.command.sub.CreateSub;
 import soys.soyslinkteam.command.sub.DenySub;
@@ -16,9 +19,9 @@ import soys.soyslinkteam.command.sub.KickSub;
 import soys.soyslinkteam.command.sub.LeaveSub;
 import soys.soyslinkteam.command.sub.ListSub;
 import soys.soyslinkteam.command.sub.PromoteSub;
+import soys.soyslinkteam.command.sub.RejectSub;
 import soys.soyslinkteam.command.sub.SetSub;
 import soys.soyslinkteam.command.sub.TransferSub;
-import soys.soyslinkteam.util.Placeholders;
 
 /**
  * /team 指令分发器：注册并委托所有玩家侧子指令。
@@ -32,6 +35,10 @@ public class TeamCommand extends CommandDispatcher {
         register(new InviteSub(plugin));
         register(new AcceptSub(plugin));
         register(new DenySub(plugin));
+        register(new ApplySub(plugin));
+        register(new ApplicationsSub(plugin));
+        register(new ApproveSub(plugin));
+        register(new RejectSub(plugin));
         register(new JoinSub(plugin));
         register(new LeaveSub(plugin));
         register(new ChatSub(plugin));
@@ -47,7 +54,6 @@ public class TeamCommand extends CommandDispatcher {
 
     @Override
     protected void showDefault(CommandSender sender, String label) {
-        plugin.getMessageManager().sendList(sender, "help.player",
-                Placeholders.of("label", label).build());
+        plugin.getMessageManager().sendList(sender, "soyslinkteam.help.player", label);
     }
 }

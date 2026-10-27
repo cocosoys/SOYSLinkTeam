@@ -11,6 +11,7 @@ depend:
 # Vault 为经济消耗入队（EconomyJoinMethod）的运行依赖，缺失时经济入队自动停用。
 # LuckPerms 为上下文注入与 VIP 元数据读取的运行依赖，缺失时这两项功能自动停用。
 # SOYSHTTPOverMC 为网页管理（ERP 后台 / TIM 用户端）的运行依赖，缺失时网页功能自动停用。
+# MCERP 为 ERP 门户模块登记的运行依赖，缺失时仅跳过门户菜单，网页功能照常。
 softdepend:
   - Essentials
   - CMI
@@ -18,6 +19,7 @@ softdepend:
   - Vault
   - LuckPerms
   - SOYSHTTPOverMC
+  - MCERP
 
 commands:
   steam:

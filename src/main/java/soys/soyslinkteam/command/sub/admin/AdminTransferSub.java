@@ -9,7 +9,6 @@ import soys.soyslinkteam.command.SubCommand;
 import soys.soyslinkteam.event.TeamTransferEvent;
 import soys.soyslinkteam.team.Team;
 import soys.soyslinkteam.team.TeamMember;
-import soys.soyslinkteam.util.Placeholders;
 import soys.soyslinkteam.util.Text;
 
 import java.util.Arrays;
@@ -43,7 +42,7 @@ public class AdminTransferSub extends SubCommand {
     @Override
     public void execute(CommandSender sender, String label, String[] args) {
         if (args.length < 2) {
-            msgList(sender, "admin.usage", null);
+            msgList(sender, "soyslinkteam.admin.usage", label);
             return;
         }
         String teamName = args[0];
@@ -51,19 +50,18 @@ public class AdminTransferSub extends SubCommand {
 
         UUID targetId = resolve(targetName);
         if (targetId == null) {
-            msg(sender, "general.player-not-found", Placeholders.of("player", targetName).build());
+            msg(sender, "soyslinkteam.general.player-not-found", targetName);
             return;
         }
 
         plugin.getTeamManager().getTeamByNameAsync(teamName, team -> {
             if (team == null) {
-                msg(sender, "team.team-not-found", Placeholders.of("team", teamName).build());
+                msg(sender, "soyslinkteam.team.team-not-found", teamName);
                 return;
             }
             TeamMember target = team.getMember(targetId);
             if (target == null) {
-                msg(sender, "team.target-not-in-your-team",
-                        Placeholders.of("player", targetName).build());
+                msg(sender, "soyslinkteam.team.target-not-in-your-team", targetName);
                 return;
             }
             Player actor = sender instanceof Player ? (Player) sender : null;
@@ -75,13 +73,12 @@ public class AdminTransferSub extends SubCommand {
             }
             team.transferLeader(targetId);
             plugin.getTeamManager().save(team);
-            msg(sender, "admin.force.transfer-success",
-                    Placeholders.of("team", team.getName()).and("player", target.getName()).build());
+            msg(sender, "soyslinkteam.admin.force.transfer-success",
+                    team.getName(), target.getName());
 
             org.bukkit.entity.Player newLeader = target.getPlayer();
             if (newLeader != null && newLeader.isOnline()) {
-                msg(newLeader, "member.transfer.received",
-                        Placeholders.of("team", team.getName()).build());
+                msg(newLeader, "soyslinkteam.member.transfer.received", team.getName());
             }
         });
     }

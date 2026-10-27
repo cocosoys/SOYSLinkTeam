@@ -103,6 +103,7 @@ public class MysqlStorage extends SqlStorage {
                         + "notice VARCHAR(255),"
                         + "tag VARCHAR(32),"
                         + "economy_cost DOUBLE NOT NULL DEFAULT 0,"
+                        + "item_cost TEXT NOT NULL DEFAULT '',"
                         + "PRIMARY KEY (id),"
                         + "INDEX idx_name (name)"
                         + ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",

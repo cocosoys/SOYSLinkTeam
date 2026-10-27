@@ -9,14 +9,12 @@ import soys.soyslinkteam.config.MessageManager;
 import soys.soyslinkteam.team.Team;
 import soys.soyslinkteam.team.TeamMember;
 import soys.soyslinkteam.team.TeamRole;
-import soys.soyslinkteam.util.Placeholders;
 import soys.soyslinkteam.util.Text;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -50,8 +48,7 @@ public class InfoSub extends SubCommand {
             String teamName = Text.join(args, 0).trim();
             plugin.getTeamManager().getTeamByNameAsync(teamName, team -> {
                 if (team == null) {
-                    msg(sender, "team.team-not-found",
-                            Placeholders.of("team", teamName).build());
+                    msg(sender, "soyslinkteam.team.team-not-found", teamName);
                     return;
                 }
                 sendInfo(sender, team);
@@ -60,7 +57,7 @@ public class InfoSub extends SubCommand {
         }
 
         if (!(sender instanceof Player)) {
-            msg(sender, "general.player-only", null);
+            msg(sender, "soyslinkteam.general.player-only");
             return;
         }
         withPlayerTeam((Player) sender, team -> sendInfo(sender, team));
@@ -81,38 +78,31 @@ public class InfoSub extends SubCommand {
         SimpleDateFormat sdf = new SimpleDateFormat(config.getDateFormat());
 
         List<String> lines = new ArrayList<>();
-        lines.add(mm.get("info.header"));
-        lines.add(mm.get("info.name", Placeholders.of("name", team.getName()).build()));
+        lines.add(mm.get("soyslinkteam.info.header"));
+        lines.add(mm.get("soyslinkteam.info.name", team.getName()));
         if (tagEnabled && team.getSettings().hasTag()) {
-            lines.add(mm.get("info.tag",
-                    Placeholders.of("tag", team.getSettings().getTag()).build()));
+            lines.add(mm.get("soyslinkteam.info.tag", team.getSettings().getTag()));
         }
-        lines.add(mm.get("info.leader",
-                Placeholders.of("leader", team.getLeaderName()).build()));
-        lines.add(mm.get("info.size", Placeholders.of("size", team.getSize())
-                .and("max", plugin.getTeamManager().getMaxSize(team))
-                .and("online", team.getOnlineCount()).build()));
-        lines.add(mm.get("info.created",
-                Placeholders.of("created", sdf.format(new java.util.Date(team.getCreatedAt())))
-                        .build()));
-        lines.add(mm.get("info.public",
-                Placeholders.of("public", team.getSettings().isOpen() ? trueText : falseText)
-                        .build()));
-        lines.add(mm.get("info.locked",
-                Placeholders.of("locked", team.getSettings().hasPassword() ? trueText : falseText)
-                        .build()));
+        lines.add(mm.get("soyslinkteam.info.leader", team.getLeaderName()));
+        lines.add(mm.get("soyslinkteam.info.size", team.getSize(),
+                plugin.getTeamManager().getMaxSize(team), team.getOnlineCount()));
+        lines.add(mm.get("soyslinkteam.info.created",
+                sdf.format(new java.util.Date(team.getCreatedAt()))));
+        lines.add(mm.get("soyslinkteam.info.public",
+                team.getSettings().isOpen() ? trueText : falseText));
+        lines.add(mm.get("soyslinkteam.info.locked",
+                team.getSettings().hasPassword() ? trueText : falseText));
         if (team.getSettings().hasEconomyCost()) {
             double cost = team.getSettings().getEconomyCost();
             String costText = (cost == Math.floor(cost))
                     ? String.valueOf((long) cost)
                     : String.format("%.2f", cost);
-            lines.add(mm.get("info.cost", Placeholders.of("cost", costText).build()));
+            lines.add(mm.get("soyslinkteam.info.cost", costText));
         }
         if (noticeEnabled && team.getSettings().hasNotice()) {
-            lines.add(mm.get("info.notice",
-                    Placeholders.of("notice", team.getSettings().getNotice()).build()));
+            lines.add(mm.get("soyslinkteam.info.notice", team.getSettings().getNotice()));
         }
-        lines.add(mm.get("info.members-header"));
+        lines.add(mm.get("soyslinkteam.info.members-header"));
         for (TeamMember member : team.getSortedMembers()) {
             String roleText;
             switch (member.getRole()) {
@@ -126,13 +116,12 @@ public class InfoSub extends SubCommand {
                     roleText = roleMember;
             }
             String status = member.isOnline()
-                    ? mm.get("info.status-online")
-                    : mm.get("info.status-offline");
-            lines.add(mm.get("info.member-entry", Placeholders.of("role", roleText)
-                    .and("player", member.getName())
-                    .and("status", status).build()));
+                    ? mm.get("soyslinkteam.info.status-online")
+                    : mm.get("soyslinkteam.info.status-offline");
+            lines.add(mm.get("soyslinkteam.info.member-entry",
+                    roleText, member.getName(), status));
         }
-        lines.add(mm.get("info.footer"));
+        lines.add(mm.get("soyslinkteam.info.footer"));
 
         for (String line : lines) {
             Text.send(sender, line);

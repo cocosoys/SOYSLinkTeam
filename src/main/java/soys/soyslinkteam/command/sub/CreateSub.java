@@ -7,7 +7,6 @@ import soys.soyslinkteam.command.SubCommand;
 import soys.soyslinkteam.team.Team;
 import soys.soyslinkteam.util.CooldownManager;
 import soys.soyslinkteam.util.NameValidator;
-import soys.soyslinkteam.util.Placeholders;
 import soys.soyslinkteam.util.Text;
 
 import java.util.Arrays;
@@ -42,14 +41,14 @@ public class CreateSub extends SubCommand {
         Player player = (Player) sender;
 
         if (args.length < 1) {
-            msg(player, "team.create.usage", Placeholders.of("label", label).build());
+            msg(player, "soyslinkteam.team.create.usage", label);
             return;
         }
 
         // 已有队伍
         if (plugin.getTeamManager().hasTeam(player.getUniqueId())) {
             String current = currentTeamName(player);
-            msg(player, "team.already-in-team", Placeholders.of("team", current).build());
+            msg(player, "soyslinkteam.team.already-in-team", current);
             return;
         }
 
@@ -58,7 +57,7 @@ public class CreateSub extends SubCommand {
             int remaining = plugin.getCooldownManager()
                     .getRemaining(CooldownManager.CREATE, player.getUniqueId());
             if (remaining > 0) {
-                msg(player, "general.cooldown", Placeholders.of("seconds", remaining).build());
+                msg(player, "soyslinkteam.general.cooldown", remaining);
                 return;
             }
         }
@@ -67,21 +66,20 @@ public class CreateSub extends SubCommand {
         String name = Text.join(args, 0).trim();
         NameValidator.Result result = plugin.getNameValidator().validateTeamName(name, null);
         if (!result.isValid()) {
-            msg(player, result.getMessageKey(), result.getPlaceholders());
+            msg(player, result.getMessageKey(), result.getArgs());
             return;
         }
 
         Team team = plugin.getTeamManager().createTeam(name, player);
         if (team == null) {
             // 被 TeamCreateEvent 监听器取消
-            msg(player, "event.cancelled", Placeholders.of("reason", "").build());
+            msg(player, "soyslinkteam.event.cancelled", "");
             return;
         }
         plugin.getCooldownManager().set(CooldownManager.CREATE, player.getUniqueId(),
                 plugin.getConfigManager().getCreateCooldown());
 
-        msg(player, "team.create.success", Placeholders
-                .of("team", team.getName()).and("label", label).build());
+        msg(player, "soyslinkteam.team.create.success", team.getName(), label);
     }
 
     private String currentTeamName(Player player) {

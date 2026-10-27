@@ -2,6 +2,7 @@ package soys.soyslinkteam.command;
 
 import org.bukkit.command.CommandSender;
 import soys.soyslinkteam.SOYSLinkTeam;
+import soys.soyslinkteam.command.sub.admin.AdminBackupSub;
 import soys.soyslinkteam.command.sub.admin.AdminDisbandSub;
 import soys.soyslinkteam.command.sub.admin.AdminInfoSub;
 import soys.soyslinkteam.command.sub.admin.AdminKickSub;
@@ -28,6 +29,7 @@ public class AdminCommand extends CommandDispatcher {
         register(new AdminMigrateSub(plugin));
         register(new AdminSyncSub(plugin));
         register(new AdminSaveSub(plugin));
+        register(new AdminBackupSub(plugin));
     }
 
     @Override

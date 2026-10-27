@@ -3,7 +3,6 @@ package soys.soyslinkteam.command.sub;
 import org.bukkit.command.CommandSender;
 import soys.soyslinkteam.SOYSLinkTeam;
 import soys.soyslinkteam.command.SubCommand;
-import soys.soyslinkteam.util.Placeholders;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -35,7 +34,7 @@ public class HelpSub extends SubCommand {
 
     @Override
     public void execute(CommandSender sender, String label, String[] args) {
-        msgList(sender, "help.player", Placeholders.of("label", label).build());
+        msgList(sender, "soyslinkteam.help.player", label);
     }
 
     @Override

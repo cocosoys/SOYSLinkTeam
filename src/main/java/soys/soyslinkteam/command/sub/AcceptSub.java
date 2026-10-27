@@ -7,7 +7,6 @@ import soys.soyslinkteam.command.SubCommand;
 import soys.soyslinkteam.join.Invite;
 import soys.soyslinkteam.join.JoinContext;
 import soys.soyslinkteam.join.JoinResult;
-import soys.soyslinkteam.util.Placeholders;
 import soys.soyslinkteam.util.Text;
 
 import java.util.ArrayList;
@@ -44,13 +43,13 @@ public class AcceptSub extends SubCommand {
         Player player = (Player) sender;
 
         if (plugin.getTeamManager().hasTeam(player.getUniqueId())) {
-            msg(player, "team.already-in-team", Placeholders.of("team", currentTeamName(player)).build());
+            msg(player, "soyslinkteam.team.already-in-team", currentTeamName(player));
             return;
         }
 
         List<Invite> pending = plugin.getInviteManager().getPending(player.getUniqueId());
         if (pending.isEmpty()) {
-            msg(player, "join.invite.accept.no-pending", null);
+            msg(player, "soyslinkteam.join.invite.accept.no-pending");
             return;
         }
 
@@ -59,8 +58,7 @@ public class AcceptSub extends SubCommand {
             String teamName = Text.join(args, 0).trim();
             target = findByName(pending, teamName);
             if (target == null) {
-                msg(player, "join.invite.accept.not-found",
-                        Placeholders.of("team", teamName).build());
+                msg(player, "soyslinkteam.join.invite.accept.not-found", teamName);
                 return;
             }
         } else if (pending.size() == 1) {
@@ -70,8 +68,8 @@ public class AcceptSub extends SubCommand {
             for (Invite invite : pending) {
                 names.add(invite.getTeamName());
             }
-            msg(player, "join.invite.accept.multiple-hint",
-                    Placeholders.of("teams", String.join("&7, &f", names)).build());
+            msg(player, "soyslinkteam.join.invite.accept.multiple-hint",
+                    String.join("&7, &f", names));
             return;
         }
 
@@ -79,8 +77,7 @@ public class AcceptSub extends SubCommand {
         plugin.getTeamManager().getTeamAsync(invite.getTeamId(), team -> {
             if (team == null) {
                 plugin.getInviteManager().remove(player.getUniqueId(), invite.getTeamId());
-                msg(player, "join.invite.cancelled",
-                        Placeholders.of("team", invite.getTeamName()).build());
+                msg(player, "soyslinkteam.join.invite.cancelled", invite.getTeamName());
                 return;
             }
 
@@ -89,14 +86,14 @@ public class AcceptSub extends SubCommand {
 
             if (!result.isSuccess()) {
                 if (result.getMessageKey() != null) {
-                    msg(player, result.getMessageKey(), result.getPlaceholders());
+                    msg(player, result.getMessageKey(), result.getArgs());
                 }
                 return;
             }
 
             // 入队成功消息已由注册表发送，这里补一条队内广播
-            team.broadcast(plugin.getMessageManager().get("join.invite.accept.broadcast",
-                            Placeholders.of("player", player.getName()).build()),
+            team.broadcast(plugin.getMessageManager().get("soyslinkteam.join.invite.accept.broadcast",
+                            player.getName()),
                     player.getUniqueId());
         });
     }

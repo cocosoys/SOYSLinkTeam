@@ -4,7 +4,6 @@ import org.bukkit.command.CommandSender;
 import soys.soyslinkteam.SOYSLinkTeam;
 import soys.soyslinkteam.command.SubCommand;
 import soys.soyslinkteam.team.Team;
-import soys.soyslinkteam.util.Placeholders;
 import soys.soyslinkteam.util.Text;
 
 import java.util.ArrayList;
@@ -41,7 +40,7 @@ public class ListSub extends SubCommand {
     public void execute(CommandSender sender, String label, String[] args) {
         Map<UUID, String> index = plugin.getTeamManager().getTeamNameIndex();
         if (index.isEmpty()) {
-            msg(sender, "list.empty", null);
+            msg(sender, "soyslinkteam.list.empty");
             return;
         }
 
@@ -52,7 +51,7 @@ public class ListSub extends SubCommand {
             page = 1;
         }
         if (page > totalPages) {
-            msg(sender, "list.invalid-page", Placeholders.of("max_page", totalPages).build());
+            msg(sender, "soyslinkteam.list.invalid-page", totalPages);
             return;
         }
 
@@ -60,8 +59,7 @@ public class ListSub extends SubCommand {
         String falseText = plugin.getConfigManager().getPlaceholderFalse();
 
         List<String> lines = new ArrayList<>();
-        lines.add(plugin.getMessageManager().get("list.header",
-                Placeholders.of("page", page).and("max_page", totalPages).build()));
+        lines.add(plugin.getMessageManager().get("soyslinkteam.list.header", page, totalPages));
 
         int start = (page - 1) * pageSize;
         int i = 0;
@@ -84,10 +82,8 @@ public class ListSub extends SubCommand {
             String online = loaded != null ? String.valueOf(loaded.getOnlineCount()) : "?";
             String pub = loaded != null
                     ? (loaded.getSettings().isOpen() ? trueText : falseText) : "";
-            lines.add(plugin.getMessageManager().get("list.entry", Placeholders
-                    .of("name", name).and("leader", leader)
-                    .and("size", size).and("max", max).and("online", online)
-                    .and("public", pub).build()));
+            lines.add(plugin.getMessageManager().get("soyslinkteam.list.entry",
+                    name, leader, size, max, online, pub));
         }
 
         for (String line : lines) {
@@ -95,7 +91,7 @@ public class ListSub extends SubCommand {
         }
 
         if (totalPages > 1) {
-            msg(sender, "list.footer", Placeholders.of("label", label).build());
+            msg(sender, "soyslinkteam.list.footer", label);
         }
     }
 }

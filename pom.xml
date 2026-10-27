@@ -156,13 +156,26 @@
         <dependency>
             <groupId>com.github.cocosoys.mc</groupId>
             <artifactId>soyshttpovermc-core</artifactId>
-            <version>1.4.0</version>
+            <version>1.4.1</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.github.cocosoys.mc</groupId>
             <artifactId>soyshttpovermc-common</artifactId>
-            <version>1.4.0</version>
+            <version>1.4.1</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!--
+            MCERP（软依赖，运行时由服务器提供）。
+            提供 ERP 门户模块化接入能力：继承 McerpExpansion 即可同时完成
+            SOYSHTTPOverMC 端点/页面登记与 ERP 菜单登记。
+            缺失时仅跳过 ERP 门户登记，网页管理功能照常可用。
+        -->
+        <dependency>
+            <groupId>com.github.cocosoys.mc</groupId>
+            <artifactId>MCERP</artifactId>
+            <version>1.0-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
 

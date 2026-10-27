@@ -6,7 +6,6 @@ import org.bukkit.entity.Player;
 import soys.soyslinkteam.SOYSLinkTeam;
 import soys.soyslinkteam.command.SubCommand;
 import soys.soyslinkteam.join.Invite;
-import soys.soyslinkteam.util.Placeholders;
 import soys.soyslinkteam.util.Text;
 
 import java.util.ArrayList;
@@ -38,7 +37,7 @@ public class DenySub extends SubCommand {
 
         List<Invite> pending = plugin.getInviteManager().getPending(player.getUniqueId());
         if (pending.isEmpty()) {
-            msg(player, "join.invite.accept.no-pending", null);
+            msg(player, "soyslinkteam.join.invite.accept.no-pending");
             return;
         }
 
@@ -53,8 +52,7 @@ public class DenySub extends SubCommand {
                 }
             }
             if (target == null) {
-                msg(player, "join.invite.accept.not-found",
-                        Placeholders.of("team", teamName).build());
+                msg(player, "soyslinkteam.join.invite.accept.not-found", teamName);
                 return;
             }
         } else if (pending.size() == 1) {
@@ -64,20 +62,18 @@ public class DenySub extends SubCommand {
             for (Invite invite : pending) {
                 names.add(invite.getTeamName());
             }
-            msg(player, "join.invite.accept.multiple-hint",
-                    Placeholders.of("teams", String.join("&7, &f", names)).build());
+            msg(player, "soyslinkteam.join.invite.accept.multiple-hint",
+                    String.join("&7, &f", names));
             return;
         }
 
         plugin.getInviteManager().remove(player.getUniqueId(), target.getTeamId());
-        msg(player, "join.invite.deny.success",
-                Placeholders.of("team", target.getTeamName()).build());
+        msg(player, "soyslinkteam.join.invite.deny.success", target.getTeamName());
 
         // 通知邀请人
         Player inviter = Bukkit.getPlayer(target.getInviter());
         if (inviter != null && inviter.isOnline()) {
-            msg(inviter, "join.invite.deny.notify-inviter",
-                    Placeholders.of("player", player.getName()).build());
+            msg(inviter, "soyslinkteam.join.invite.deny.notify-inviter", player.getName());
         }
     }
 

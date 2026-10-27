@@ -10,7 +10,6 @@ import soys.soyslinkteam.join.Invite;
 import soys.soyslinkteam.join.impl.InviteJoinMethod;
 import soys.soyslinkteam.permission.TeamAction;
 import soys.soyslinkteam.team.Team;
-import soys.soyslinkteam.util.Placeholders;
 
 import java.util.Arrays;
 import java.util.List;
@@ -40,13 +39,13 @@ public class InviteSub extends SubCommand {
         Player player = (Player) sender;
 
         if (args.length < 1) {
-            msg(player, "join.invite.usage", Placeholders.of("label", label).build());
+            msg(player, "soyslinkteam.join.invite.usage", label);
             return;
         }
 
         InviteJoinMethod method = plugin.getJoinMethodRegistry().getInviteMethod();
         if (method == null || !method.isEnabled()) {
-            msg(player, "join.method-disabled", Placeholders.of("method", "队长邀请").build());
+            msg(player, "soyslinkteam.join.method-disabled", "队长邀请");
             return;
         }
 
@@ -67,15 +66,13 @@ public class InviteSub extends SubCommand {
                 resolvedName = online.getName();
             } else {
                 if (!method.isAllowOffline()) {
-                    msg(player, "general.player-offline",
-                            Placeholders.of("player", targetName).build());
+                    msg(player, "soyslinkteam.general.player-offline", targetName);
                     return;
                 }
                 @SuppressWarnings("deprecation")
                 OfflinePlayer offline = Bukkit.getOfflinePlayer(targetName);
                 if (offline == null || !offline.hasPlayedBefore()) {
-                    msg(player, "general.player-not-found",
-                            Placeholders.of("player", targetName).build());
+                    msg(player, "soyslinkteam.general.player-not-found", targetName);
                     return;
                 }
                 targetId = offline.getUniqueId();
@@ -83,22 +80,18 @@ public class InviteSub extends SubCommand {
             }
 
             if (targetId.equals(player.getUniqueId())) {
-                msg(player, "join.invite.invite-self", null);
+                msg(player, "soyslinkteam.join.invite.invite-self");
                 return;
             }
 
             if (plugin.getTeamManager().hasTeam(targetId)) {
-                msg(player, "join.invite.already-in-team",
-                        Placeholders.of("player", resolvedName).build());
+                msg(player, "soyslinkteam.join.invite.already-in-team", resolvedName);
                 return;
             }
 
             if (plugin.getTeamManager().isFull(team)) {
-                msg(player, "team.team-full", Placeholders
-                        .of("team", team.getName())
-                        .and("size", team.getSize())
-                        .and("max", plugin.getTeamManager().getMaxSize(team))
-                        .build());
+                msg(player, "soyslinkteam.team.team-full",
+                        team.getName(), team.getSize(), plugin.getTeamManager().getMaxSize(team));
                 return;
             }
 
@@ -106,16 +99,14 @@ public class InviteSub extends SubCommand {
             int cooldown = plugin.getInviteManager()
                     .getResendCooldown(team.getId(), targetId, method.getResendCooldown());
             if (cooldown > 0) {
-                msg(player, "join.invite.already-invited", Placeholders
-                        .of("player", resolvedName).and("seconds", cooldown).build());
+                msg(player, "soyslinkteam.join.invite.already-invited", resolvedName, cooldown);
                 return;
             }
 
             // 待处理邀请上限
             int maxPending = method.getMaxPending();
             if (maxPending > 0 && plugin.getInviteManager().countPending(targetId) >= maxPending) {
-                msg(player, "join.invite.pending-limit",
-                        Placeholders.of("player", resolvedName).build());
+                msg(player, "soyslinkteam.join.invite.pending-limit", resolvedName);
                 return;
             }
 
@@ -125,10 +116,8 @@ public class InviteSub extends SubCommand {
             plugin.getInviteManager().add(invite);
             plugin.getTeamManager().save(team);
 
-            msg(player, "join.invite.sent", Placeholders
-                    .of("player", resolvedName)
-                    .and("seconds", method.getExpireSeconds())
-                    .build());
+            msg(player, "soyslinkteam.join.invite.sent",
+                    resolvedName, method.getExpireSeconds());
 
             notifyTarget(targetId, team, player, label);
         });
@@ -142,10 +131,8 @@ public class InviteSub extends SubCommand {
         if (target == null || !target.isOnline()) {
             return;
         }
-        msg(target, "join.invite.received", Placeholders
-                .of("player", inviter.getName()).and("team", team.getName()).build());
-        msg(target, "join.invite.received-hint", Placeholders
-                .of("team", team.getName()).and("label", label).build());
+        msg(target, "soyslinkteam.join.invite.received", inviter.getName(), team.getName());
+        msg(target, "soyslinkteam.join.invite.received-hint", label, team.getName());
     }
 
     @Override

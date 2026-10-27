@@ -3,7 +3,6 @@ package soys.soyslinkteam.command.sub.admin;
 import org.bukkit.command.CommandSender;
 import soys.soyslinkteam.SOYSLinkTeam;
 import soys.soyslinkteam.command.SubCommand;
-import soys.soyslinkteam.util.Placeholders;
 
 import java.util.Arrays;
 import java.util.List;
@@ -38,10 +37,10 @@ public class AdminReloadSub extends SubCommand {
         try {
             plugin.reloadConfiguration();
             long ms = System.currentTimeMillis() - start;
-            msg(sender, "general.reload-success", Placeholders.of("ms", ms).build());
+            msg(sender, "soyslinkteam.general.reload-success", ms);
         } catch (Exception e) {
             plugin.getLogger().log(java.util.logging.Level.SEVERE, "重载配置失败", e);
-            msg(sender, "general.reload-failed", null);
+            msg(sender, "soyslinkteam.general.reload-failed");
         }
     }
 }

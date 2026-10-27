@@ -6,7 +6,6 @@ import soys.soyslinkteam.SOYSLinkTeam;
 import soys.soyslinkteam.command.SubCommand;
 import soys.soyslinkteam.join.JoinContext;
 import soys.soyslinkteam.join.JoinResult;
-import soys.soyslinkteam.util.Placeholders;
 import soys.soyslinkteam.util.Text;
 
 import java.util.Arrays;
@@ -42,13 +41,13 @@ public class JoinSub extends SubCommand {
         Player player = (Player) sender;
 
         if (args.length < 1) {
-            msg(player, "join.usage", Placeholders.of("label", label).build());
+            msg(player, "soyslinkteam.join.usage", label);
             return;
         }
 
         if (plugin.getTeamManager().hasTeam(player.getUniqueId())) {
             String current = currentTeamName(player);
-            msg(player, "team.already-in-team", Placeholders.of("team", current).build());
+            msg(player, "soyslinkteam.team.already-in-team", current);
             return;
         }
 
@@ -57,13 +56,13 @@ public class JoinSub extends SubCommand {
 
         plugin.getTeamManager().getTeamByNameAsync(teamName, team -> {
             if (team == null) {
-                msg(player, "team.team-not-found", Placeholders.of("team", teamName).build());
+                msg(player, "soyslinkteam.team.team-not-found", teamName);
                 return;
             }
             JoinContext context = JoinContext.of(player, team, argument, label);
             JoinResult result = plugin.getJoinMethodRegistry().tryJoin(context);
             if (!result.isSuccess() && result.getMessageKey() != null) {
-                msg(player, result.getMessageKey(), result.getPlaceholders());
+                msg(player, result.getMessageKey(), result.getArgs());
             }
         });
     }
